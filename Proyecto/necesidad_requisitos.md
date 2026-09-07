@@ -21,27 +21,3 @@
 7. El sistema estará disponible en cualquier momento y sin restricción de horario.
 8. El sistema será accesible desde un celular mediante el navegador.
 9. El sistema adaptará la forma de explicar según la técnica de estudio de cada estudiante (por ejemplo, aprender por asociación con temas de su interés).
-
-**Relación necesidad - requisito**
-- Necesidad 1 → Requisito 1, 7
-- Necesidad 2 → Requisito 2, 5
-- Necesidad 3 → Requisito 1, 2
-- Necesidad 4 → Requisito 3
-- Necesidad 5 → Requisito 4
-- Necesidad 6 → Requisito 5
-- Necesidad 7 → Requisito 6
-- Necesidad 8 → Requisito 7
-- Necesidad 9 → Requisito 2, 4
-- Necesidad 10 → Requisito 8
-- Necesidad 11 → Requisito 5, 9
-
-**Relación requisito - necesidad**
-- Requisito 1 → Necesidad 1, 3
-- Requisito 2 → Necesidad 2, 3, 9
-- Requisito 3 → Necesidad 4
-- Requisito 4 → Necesidad 5, 9
-- Requisito 5 → Necesidad 2, 6
-- Requisito 6 → Necesidad 7
-- Requisito 7 → Necesidad 1, 8
-- Requisito 8 → Necesidad 10
-- Requisito 9 → Necesidad 11
