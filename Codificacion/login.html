@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="EduAsistente - Inicia sesión para continuar estudiando">
+  <title>EduAsistente - Iniciar Sesión</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar" id="navbar">
+    <div class="navbar__brand">
+      <div class="navbar__logo" aria-label="Logo EduAsistente">📖</div>
+      <div>
+        <div class="navbar__title">EduAsistente</div>
+        <div class="navbar__subtitle">Tu compañero de estudio en casa</div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero" id="hero-section">
+    <p class="hero__tag">Aprende a tu ritmo</p>
+    <h1 class="hero__title">Todo lo que no entiendes, lo vemos juntos.</h1>
+    <p class="hero__description">Explicaciones claras, paso a paso y sin miedo a equivocarte.</p>
+  </section>
+
+  <!-- Formulario de Login -->
+  <main class="auth-card" id="login-form">
+    <!-- Tabs -->
+    <div class="auth-tabs" role="tablist">
+      <button class="auth-tab auth-tab--active" role="tab" id="tab-login" aria-selected="true">Iniciar Sesión</button>
+      <a href="register.html" class="auth-tab" role="tab" id="tab-register">Crear Cuenta</a>
+    </div>
+
+    <form id="form-login" autocomplete="off">
+      <!-- Correo electrónico -->
+      <div class="form-group">
+        <label class="form-label" for="input-email">Correo electrónico</label>
+        <div class="form-input-wrapper">
+          <input
+            type="email"
+            id="input-email"
+            class="form-input"
+            placeholder="Ej. carlos@correo.com"
+            required
+          >
+        </div>
+      </div>
+
+      <!-- Contraseña -->
+      <div class="form-group">
+        <label class="form-label" for="input-password">Contraseña</label>
+        <div class="form-input-wrapper">
+          <input
+            type="password"
+            id="input-password"
+            class="form-input"
+            placeholder="Escribe tu contraseña"
+          >
+          <button type="button" class="form-toggle-password" id="btn-toggle-password" aria-label="Mostrar contraseña">👁</button>
+        </div>
+      </div>
+
+      <!-- Botón submit -->
+      <button type="submit" class="btn btn--primary" id="btn-login">
+        Entrar &nbsp;→
+      </button>
+    </form>
+  </main>
+
+  <!-- Footer -->
+  <footer class="auth-footer" id="auth-footer">
+    Tu espacio seguro para aprender en calma.
+  </footer>
+
+  <script>
+    // Toggle password visibility
+    const toggleBtn = document.getElementById('btn-toggle-password');
+    const passwordInput = document.getElementById('input-password');
+
+    toggleBtn.addEventListener('click', () => {
+      const isPassword = passwordInput.type === 'password';
+      passwordInput.type = isPassword ? 'text' : 'password';
+      toggleBtn.textContent = isPassword ? '🙈' : '👁';
+    });
+
+    // Form submit
+    document.getElementById('form-login').addEventListener('submit', (e) => {
+      e.preventDefault();
+      // Aquí iría la lógica de login
+      window.location.href = 'dashboard.html';
+    });
+  </script>
+
+</body>
+</html>

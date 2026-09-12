@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="EduAsistente - Chat de estudio de Matemáticas">
+  <title>EduAsistente - Matemáticas</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <div class="chat-page" id="chat-page">
+
+    <!-- Navbar con usuario -->
+    <nav class="navbar" id="navbar">
+      <div class="navbar__brand">
+        <div class="navbar__logo" aria-label="Logo EduAsistente">📖</div>
+        <div>
+          <div class="navbar__title">EduAsistente</div>
+        </div>
+      </div>
+      <div class="navbar__actions">
+        <span class="navbar__user" id="navbar-user">Hola, Carlos</span>
+        <button class="navbar__logout" id="btn-logout" aria-label="Cerrar sesión">
+          ↪ Salir
+        </button>
+      </div>
+    </nav>
+
+    <!-- Volver al dashboard -->
+    <button class="chat-back" id="btn-back" aria-label="Cambiar materia">
+      ← &nbsp;Cambiar materia
+    </button>
+
+    <!-- Header de la materia -->
+    <div class="chat-subject-header" id="chat-subject-header">
+      <div class="chat-subject-header__icon">🔗</div>
+      <div>
+        <p class="chat-subject-header__tag">Estás estudiando</p>
+        <h1 class="chat-subject-header__name" id="subject-name">Matemáticas</h1>
+      </div>
+    </div>
+
+    <!-- Mensajes del chat -->
+    <div class="chat-messages" id="chat-messages">
+
+      <!-- Mensaje del asistente -->
+      <div class="chat-message" id="msg-1">
+        <div class="chat-message__header">
+          <div class="chat-message__avatar">🤖</div>
+          <span class="chat-message__author">EduAsistente</span>
+          <span class="chat-message__time">16:25</span>
+        </div>
+        <div class="chat-message__bubble">
+          ¡Hola! Soy tu asistente de Matemáticas. Escríbeme cualquier duda o ejercicio y lo resolvemos juntos, paso a paso.
+        </div>
+        <div class="chat-message__actions">
+          <button class="chat-action-btn" id="btn-copy-1" aria-label="Copiar mensaje">
+            📋 Copiar
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Barra de entrada -->
+    <div class="chat-input-bar" id="chat-input-bar">
+      <input
+        type="text"
+        class="chat-input"
+        id="chat-input"
+        placeholder="Escribe tu duda de Matemáticas..."
+        autocomplete="off"
+      >
+      <button class="chat-send-btn" id="btn-send" aria-label="Enviar mensaje">
+        ✈
+      </button>
+    </div>
+
+  </div>
+
+  <script>
+    // Leer parámetros de la URL (materia_id y nombre de la tabla materias)
+    const params = new URLSearchParams(window.location.search);
+    const materiaId = params.get('materia_id') || '1';
+    const materiaNombre = params.get('nombre') || 'Matemáticas';
+
+    // Actualizar la UI con los datos de la materia
+    document.getElementById('subject-name').textContent = materiaNombre;
+    document.getElementById('chat-input').placeholder = `Escribe tu duda de ${materiaNombre}...`;
+    document.title = `EduAsistente - ${materiaNombre}`;
+
+    // Volver al dashboard
+    document.getElementById('btn-back').addEventListener('click', () => {
+      window.location.href = 'dashboard.html';
+    });
+
+    // Logout
+    document.getElementById('btn-logout').addEventListener('click', () => {
+      window.location.href = 'login.html';
+    });
+
+    // Enviar mensaje (solo texto, como la tabla mensajes: contenido TEXT)
+    const chatInput = document.getElementById('chat-input');
+    const chatMessages = document.getElementById('chat-messages');
+    const btnSend = document.getElementById('btn-send');
+
+    function sendMessage() {
+      const text = chatInput.value.trim();
+      if (!text) return;
+
+      // Mensaje del usuario (tabla mensajes: usuario_id, materia_id, contenido)
+      const userMsg = document.createElement('div');
+      userMsg.className = 'chat-message chat-message--user';
+      userMsg.innerHTML = `
+        <div class="chat-message__bubble">${text}</div>
+      `;
+      chatMessages.appendChild(userMsg);
+
+      chatInput.value = '';
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+
+      // Respuesta simulada del asistente (tabla respuestas: mensaje_id, contenido)
+      setTimeout(() => {
+        const botMsg = document.createElement('div');
+        botMsg.className = 'chat-message';
+        const now = new Date();
+        const time = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+        botMsg.innerHTML = `
+          <div class="chat-message__header">
+            <div class="chat-message__avatar">🤖</div>
+            <span class="chat-message__author">EduAsistente</span>
+            <span class="chat-message__time">${time}</span>
+          </div>
+          <div class="chat-message__bubble">
+            ¡Buena pregunta! Déjame explicarte paso a paso...
+          </div>
+          <div class="chat-message__actions">
+            <button class="chat-action-btn" aria-label="Copiar">📋 Copiar</button>
+          </div>
+        `;
+        chatMessages.appendChild(botMsg);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }, 800);
+    }
+
+    btnSend.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+
+    // Copiar texto del mensaje al portapapeles
+    chatMessages.addEventListener('click', async (e) => {
+      const copyBtn = e.target.closest('.chat-action-btn');
+      if (!copyBtn) return;
+      const messageCard = copyBtn.closest('.chat-message');
+      const bubble = messageCard ? messageCard.querySelector('.chat-message__bubble') : null;
+      if (bubble) {
+        try {
+          await navigator.clipboard.writeText(bubble.textContent.trim());
+          const originalText = copyBtn.innerHTML;
+          copyBtn.innerHTML = '✅ Copiado';
+          setTimeout(() => {
+            copyBtn.innerHTML = originalText;
+          }, 1500);
+        } catch (err) {
+          console.error('Error al copiar texto:', err);
+        }
+      }
+    });
+  </script>
+
+</body>
+</html>
