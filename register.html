@@ -91,6 +91,11 @@
   </footer>
 
   <script>
+    // Verificar si ya tiene sesión activa
+    fetch('/api/sesion').then(r => r.json()).then(data => {
+      if (data.autenticado) window.location.href = 'dashboard.html';
+    }).catch(() => {});
+
     // Toggle password visibility
     const toggleBtn = document.getElementById('btn-toggle-password');
     const passwordInput = document.getElementById('input-password');
@@ -101,12 +106,66 @@
       toggleBtn.textContent = isPassword ? '🙈' : '👁';
     });
 
-    // Form submit (prevenir recarga)
-    document.getElementById('form-register').addEventListener('submit', (e) => {
+    // Form submit — conecta con /api/register
+    const formRegister = document.getElementById('form-register');
+    const btnRegister = document.getElementById('btn-register');
+
+    formRegister.addEventListener('submit', async (e) => {
       e.preventDefault();
-      // Aquí iría la lógica de registro
-      window.location.href = 'dashboard.html';
+
+      const prevError = formRegister.querySelector('.form-error');
+      if (prevError) prevError.remove();
+
+      const nombre = document.getElementById('input-name').value.trim();
+      const email = document.getElementById('input-email').value.trim();
+      const contrasena = passwordInput.value.trim();
+
+      if (!nombre || !email || !contrasena) {
+        mostrarError('Por favor, completa todos los campos');
+        return;
+      }
+
+      if (contrasena.length < 4) {
+        mostrarError('La contraseña debe tener al menos 4 caracteres');
+        return;
+      }
+
+      btnRegister.disabled = true;
+      btnRegister.textContent = 'Creando cuenta...';
+
+      try {
+        const res = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nombre, email, contrasena }),
+        });
+
+        const data = await res.json();
+
+        if (data.ok) {
+          localStorage.setItem('usuario_nombre', data.usuario.nombre);
+          localStorage.setItem('usuario_id', data.usuario.id);
+          window.location.href = 'dashboard.html';
+        } else {
+          mostrarError(data.error || 'Error al crear la cuenta');
+        }
+      } catch (err) {
+        mostrarError('No se pudo conectar con el servidor. Intenta de nuevo.');
+      } finally {
+        btnRegister.disabled = false;
+        btnRegister.innerHTML = 'Comenzar a Estudiar &nbsp;→';
+      }
     });
+
+    function mostrarError(msg) {
+      const prevError = formRegister.querySelector('.form-error');
+      if (prevError) prevError.remove();
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'form-error';
+      errorDiv.textContent = msg;
+      errorDiv.style.cssText = 'color:#ef4444;font-size:0.82rem;text-align:center;margin-top:12px;padding:10px;background:rgba(239,68,68,0.1);border-radius:8px;';
+      formRegister.appendChild(errorDiv);
+    }
   </script>
 
 </body>

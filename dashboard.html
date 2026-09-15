@@ -18,7 +18,7 @@
       </div>
     </div>
     <div class="navbar__actions">
-      <span class="navbar__user" id="navbar-user">Hola, Carlos</span>
+      <span class="navbar__user" id="navbar-user">Cargando...</span>
       <button class="navbar__logout" id="btn-logout" aria-label="Cerrar sesión">
         ↪ Salir
       </button>
@@ -29,46 +29,16 @@
   <main class="dashboard" id="dashboard">
     <p class="dashboard__tag">Momento de aprender</p>
     <h1 class="dashboard__title">¡Hola! ¿Qué materia vamos a estudiar hoy?</h1>
-    <p class="dashboard__subtitle">Elige una para empezar a resolver tus dudas.</p>
+    <p class="dashboard__subtitle">Elige una para empezar a resolver tus dudas paso a paso.</p>
 
     <!-- Botón añadir materia -->
     <button class="btn btn--add" id="btn-add-subject" aria-label="Añadir materia">
       + &nbsp;Añadir Materia
     </button>
 
-    <!-- Grid de materias -->
+    <!-- Grid de materias (se carga dinámicamente) -->
     <div class="subjects-grid" id="subjects-grid">
-      <!-- Matemáticas -->
-      <a href="chat.html?materia_id=1&nombre=Matemáticas" class="subject-card subject-card--math" id="card-1" data-materia-id="1">
-        <div class="subject-card__icon">📐</div>
-        <div class="subject-card__name">Matemáticas</div>
-        <div class="subject-card__topics">Álgebra, Geometría, Operaciones</div>
-        <span class="subject-card__arrow">›</span>
-      </a>
-
-      <!-- Física -->
-      <a href="chat.html?materia_id=2&nombre=Física" class="subject-card subject-card--physics" id="card-2" data-materia-id="2">
-        <div class="subject-card__icon">⚡</div>
-        <div class="subject-card__name">Física</div>
-        <div class="subject-card__topics">Fuerzas, Velocidad, Energía</div>
-        <span class="subject-card__arrow">›</span>
-      </a>
-
-      <!-- Química -->
-      <a href="chat.html?materia_id=3&nombre=Química" class="subject-card subject-card--chemistry" id="card-3" data-materia-id="3">
-        <div class="subject-card__icon">🧪</div>
-        <div class="subject-card__name">Química</div>
-        <div class="subject-card__topics">Elementos, Reacciones, Fórmulas</div>
-        <span class="subject-card__arrow">›</span>
-      </a>
-
-      <!-- Lenguaje -->
-      <a href="chat.html?materia_id=4&nombre=Lenguaje" class="subject-card subject-card--language" id="card-4" data-materia-id="4">
-        <div class="subject-card__icon">📚</div>
-        <div class="subject-card__name">Lenguaje</div>
-        <div class="subject-card__topics">Gramática, Lectura, Ortografía</div>
-        <span class="subject-card__arrow">›</span>
-      </a>
+      <!-- Materias cargadas con JavaScript -->
     </div>
 
     <!-- Tip banner -->
@@ -91,7 +61,6 @@
       <p class="modal__description">Solo necesitas un nombre. La descripción es opcional.</p>
 
       <form id="form-add-subject" autocomplete="off">
-        <!-- Nombre de la materia -->
         <div class="form-group">
           <label class="form-label" for="input-subject-name">Nombre de la materia</label>
           <div class="form-input-wrapper">
@@ -105,7 +74,6 @@
           </div>
         </div>
 
-        <!-- Descripción (opcional) -->
         <div class="form-group">
           <label class="form-label" for="input-subject-desc">Descripción</label>
           <span class="form-hint" style="margin-top: 0; margin-bottom: 8px; display: block;">(opcional)</span>
@@ -114,13 +82,12 @@
               type="text"
               id="input-subject-desc"
               class="form-input"
-              placeholder="Ej. Civilizaciones, fechas, imperios"
+              placeholder="Ej. Civilizaciones, fechas, hechos importantes"
             >
           </div>
-          <p class="form-hint">Breve descripción de los temas que cubre esta materia.</p>
+          <p class="form-hint">Breve resumen de los temas de esta materia.</p>
         </div>
 
-        <!-- Acciones -->
         <div class="modal__actions">
           <button type="button" class="btn btn--ghost" id="btn-cancel-subject">Cancelar</button>
           <button type="submit" class="btn btn--primary" id="btn-save-subject">+ &nbsp;Guardar materia</button>
@@ -130,7 +97,95 @@
   </div>
 
   <script>
-    // Modal abrir/cerrar
+    // 1. Verificar sesión activa
+    fetch('/api/sesion')
+      .then(res => res.json())
+      .then(data => {
+        if (data.autenticado && data.usuario) {
+          document.getElementById('navbar-user').textContent = 'Hola, ' + data.usuario.nombre;
+        } else {
+          window.location.href = 'login.html';
+        }
+      })
+      .catch(() => {
+        // En caso de modo local sin servidor, lee de localStorage
+        const nombreLocal = localStorage.getItem('usuario_nombre') || 'Estudiante';
+        document.getElementById('navbar-user').textContent = 'Hola, ' + nombreLocal;
+      });
+
+    // Iconos y estilos temáticos por materia
+    const ICONOS = {
+      'Matemáticas': { icon: '📐', class: 'subject-card--math' },
+      'Física': { icon: '⚡', class: 'subject-card--physics' },
+      'Química': { icon: '🧪', class: 'subject-card--chemistry' },
+      'Lenguaje': { icon: '📚', class: 'subject-card--language' },
+    };
+
+    // 2. Cargar lista de materias desde la API
+    async function cargarMaterias() {
+      const grid = document.getElementById('subjects-grid');
+      try {
+        const res = await fetch('/api/materias');
+        const data = await res.json();
+        
+        if (data.ok && data.materias && data.materias.length > 0) {
+          grid.innerHTML = '';
+          data.materias.forEach(mat => {
+            const tema = ICONOS[mat.nombre] || { icon: '📖', class: '' };
+            const card = document.createElement('a');
+            card.href = `chat.html?materia_id=${mat.id}&nombre=${encodeURIComponent(mat.nombre)}`;
+            card.className = `subject-card ${tema.class}`;
+            card.id = `card-${mat.id}`;
+            card.innerHTML = `
+              <div class="subject-card__icon">${tema.icon}</div>
+              <div class="subject-card__name">${mat.nombre}</div>
+              <div class="subject-card__topics">${mat.descripcion || 'Temas generales'}</div>
+              <span class="subject-card__arrow">›</span>
+            `;
+            grid.appendChild(card);
+          });
+        } else {
+          // Materias por defecto si la base de datos está vacía
+          mostrarMateriasPorDefecto();
+        }
+      } catch (err) {
+        mostrarMateriasPorDefecto();
+      }
+    }
+
+    function mostrarMateriasPorDefecto() {
+      const grid = document.getElementById('subjects-grid');
+      grid.innerHTML = `
+        <a href="chat.html?materia_id=1&nombre=Matemáticas" class="subject-card subject-card--math">
+          <div class="subject-card__icon">📐</div>
+          <div class="subject-card__name">Matemáticas</div>
+          <div class="subject-card__topics">Álgebra, Geometría, Operaciones</div>
+          <span class="subject-card__arrow">›</span>
+        </a>
+        <a href="chat.html?materia_id=2&nombre=Física" class="subject-card subject-card--physics">
+          <div class="subject-card__icon">⚡</div>
+          <div class="subject-card__name">Física</div>
+          <div class="subject-card__topics">Fuerzas, Velocidad, Energía</div>
+          <span class="subject-card__arrow">›</span>
+        </a>
+        <a href="chat.html?materia_id=3&nombre=Química" class="subject-card subject-card--chemistry">
+          <div class="subject-card__icon">🧪</div>
+          <div class="subject-card__name">Química</div>
+          <div class="subject-card__topics">Elementos, Reacciones, Fórmulas</div>
+          <span class="subject-card__arrow">›</span>
+        </a>
+        <a href="chat.html?materia_id=4&nombre=Lenguaje" class="subject-card subject-card--language">
+          <div class="subject-card__icon">📚</div>
+          <div class="subject-card__name">Lenguaje</div>
+          <div class="subject-card__topics">Gramática, Lectura, Ortografía</div>
+          <span class="subject-card__arrow">›</span>
+        </a>
+      `;
+    }
+
+    cargarMaterias();
+
+    // 3. Control del Modal de añadir materia
     const overlay = document.getElementById('modal-overlay');
     const btnOpen = document.getElementById('btn-add-subject');
     const btnClose = document.getElementById('btn-modal-close');
@@ -153,37 +208,41 @@
       if (e.target === overlay) closeModal();
     });
 
-    // Form submit
-    document.getElementById('form-add-subject').addEventListener('submit', (e) => {
+    // Guardar nueva materia
+    document.getElementById('form-add-subject').addEventListener('submit', async (e) => {
       e.preventDefault();
       const nameInput = document.getElementById('input-subject-name');
       const descInput = document.getElementById('input-subject-desc');
-      const name = nameInput.value.trim();
-      const desc = descInput.value.trim() || 'General';
+      const nombre = nameInput.value.trim();
+      const descripcion = descInput.value.trim();
 
-      if (name) {
-        const grid = document.getElementById('subjects-grid');
-        const newCard = document.createElement('a');
-        const newId = grid.children.length + 1;
-        newCard.href = `chat.html?materia_id=${newId}&nombre=${encodeURIComponent(name)}`;
-        newCard.className = 'subject-card';
-        newCard.id = `card-${newId}`;
-        newCard.dataset.materiaId = newId;
-        newCard.innerHTML = `
-          <div class="subject-card__icon">📖</div>
-          <div class="subject-card__name">${name}</div>
-          <div class="subject-card__topics">${desc}</div>
-          <span class="subject-card__arrow">›</span>
-        `;
-        grid.appendChild(newCard);
-        nameInput.value = '';
-        descInput.value = '';
+      if (!nombre) return;
+
+      try {
+        const res = await fetch('/api/materias', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nombre, descripcion })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          cargarMaterias();
+        }
+      } catch (err) {
+        console.error('Error al guardar materia:', err);
       }
+
+      nameInput.value = '';
+      descInput.value = '';
       closeModal();
     });
 
-    // Logout
-    document.getElementById('btn-logout').addEventListener('click', () => {
+    // 4. Cerrar sesión
+    document.getElementById('btn-logout').addEventListener('click', async () => {
+      try {
+        await fetch('/api/logout', { method: 'POST' });
+      } catch (e) {}
+      localStorage.clear();
       window.location.href = 'login.html';
     });
   </script>

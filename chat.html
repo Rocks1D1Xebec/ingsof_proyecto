@@ -3,9 +3,62 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="description" content="EduAsistente - Chat de estudio de Matemáticas">
-  <title>EduAsistente - Matemáticas</title>
+  <meta name="description" content="EduAsistente - Chat de estudio interactivo con Inteligencia Artificial">
+  <title>EduAsistente - Chat de Estudio</title>
   <link rel="stylesheet" href="css/styles.css">
+  <style>
+    /* Estilos adicionales simples para ejercicios en el chat */
+    .exercise-box {
+      background: #f8fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 10px;
+    }
+    .exercise-box__title {
+      font-weight: 700;
+      color: #3b82f6;
+      margin-bottom: 8px;
+    }
+    .exercise-box__input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      margin-top: 8px;
+      font-size: 0.95rem;
+    }
+    .exercise-box__btn {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    .chat-quick-actions {
+      display: flex;
+      gap: 10px;
+      padding: 8px 16px;
+      background: #ffffff;
+      border-top: 1px solid #f1f5f9;
+    }
+    .quick-btn {
+      background: #eff6ff;
+      color: #2563eb;
+      border: 1px solid #bfdbfe;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .quick-btn:hover {
+      background: #dbeafe;
+    }
+  </style>
 </head>
 <body>
 
@@ -20,7 +73,7 @@
         </div>
       </div>
       <div class="navbar__actions">
-        <span class="navbar__user" id="navbar-user">Hola, Carlos</span>
+        <span class="navbar__user" id="navbar-user">Cargando...</span>
         <button class="navbar__logout" id="btn-logout" aria-label="Cerrar sesión">
           ↪ Salir
         </button>
@@ -34,7 +87,7 @@
 
     <!-- Header de la materia -->
     <div class="chat-subject-header" id="chat-subject-header">
-      <div class="chat-subject-header__icon">🔗</div>
+      <div class="chat-subject-header__icon" id="subject-icon">📐</div>
       <div>
         <p class="chat-subject-header__tag">Estás estudiando</p>
         <h1 class="chat-subject-header__name" id="subject-name">Matemáticas</h1>
@@ -43,24 +96,23 @@
 
     <!-- Mensajes del chat -->
     <div class="chat-messages" id="chat-messages">
-
-      <!-- Mensaje del asistente -->
-      <div class="chat-message" id="msg-1">
+      <!-- Mensaje inicial -->
+      <div class="chat-message" id="msg-welcome">
         <div class="chat-message__header">
           <div class="chat-message__avatar">🤖</div>
           <span class="chat-message__author">EduAsistente</span>
-          <span class="chat-message__time">16:25</span>
+          <span class="chat-message__time" id="welcome-time">Ahora</span>
         </div>
-        <div class="chat-message__bubble">
-          ¡Hola! Soy tu asistente de Matemáticas. Escríbeme cualquier duda o ejercicio y lo resolvemos juntos, paso a paso.
-        </div>
-        <div class="chat-message__actions">
-          <button class="chat-action-btn" id="btn-copy-1" aria-label="Copiar mensaje">
-            📋 Copiar
-          </button>
+        <div class="chat-message__bubble" id="welcome-bubble">
+          ¡Hola! Soy tu asistente de estudio. Escríbeme cualquier duda o ejercicio que no entiendas y lo resolveremos juntos paso a paso.
         </div>
       </div>
+    </div>
 
+    <!-- Acciones rápidas (Ejercicios de práctica) -->
+    <div class="chat-quick-actions">
+      <button class="quick-btn" id="btn-practice">🎯 Dame un ejercicio de práctica</button>
+      <button class="quick-btn" id="btn-example">💡 Dame un ejemplo sencillo</button>
     </div>
 
     <!-- Barra de entrada -->
@@ -69,7 +121,7 @@
         type="text"
         class="chat-input"
         id="chat-input"
-        placeholder="Escribe tu duda de Matemáticas..."
+        placeholder="Escribe tu duda..."
         autocomplete="off"
       >
       <button class="chat-send-btn" id="btn-send" aria-label="Enviar mensaje">
@@ -80,93 +132,258 @@
   </div>
 
   <script>
-    // Leer parámetros de la URL (materia_id y nombre de la tabla materias)
+    // 1. Obtener parámetros de la URL
     const params = new URLSearchParams(window.location.search);
     const materiaId = params.get('materia_id') || '1';
     const materiaNombre = params.get('nombre') || 'Matemáticas';
 
-    // Actualizar la UI con los datos de la materia
+    // Iconos temáticos
+    const ICONOS = {
+      'Matemáticas': '📐',
+      'Física': '⚡',
+      'Química': '🧪',
+      'Lenguaje': '📚'
+    };
+
+    // Actualizar encabezado
     document.getElementById('subject-name').textContent = materiaNombre;
+    document.getElementById('subject-icon').textContent = ICONOS[materiaNombre] || '📖';
     document.getElementById('chat-input').placeholder = `Escribe tu duda de ${materiaNombre}...`;
     document.title = `EduAsistente - ${materiaNombre}`;
+    document.getElementById('welcome-bubble').textContent = `¡Hola! Soy tu asistente de ${materiaNombre}. Escríbeme cualquier duda, fórmula o tema que no entiendas y lo resolveremos paso a paso.`;
 
-    // Volver al dashboard
+    // 2. Verificar sesión activa
+    fetch('/api/sesion')
+      .then(res => res.json())
+      .then(data => {
+        if (data.autenticado && data.usuario) {
+          document.getElementById('navbar-user').textContent = 'Hola, ' + data.usuario.nombre;
+        }
+      })
+      .catch(() => {
+        const nombreLocal = localStorage.getItem('usuario_nombre') || 'Estudiante';
+        document.getElementById('navbar-user').textContent = 'Hola, ' + nombreLocal;
+      });
+
+    // 3. Volver y Logout
     document.getElementById('btn-back').addEventListener('click', () => {
       window.location.href = 'dashboard.html';
     });
 
-    // Logout
-    document.getElementById('btn-logout').addEventListener('click', () => {
+    document.getElementById('btn-logout').addEventListener('click', async () => {
+      try {
+        await fetch('/api/logout', { method: 'POST' });
+      } catch (e) {}
+      localStorage.clear();
       window.location.href = 'login.html';
     });
 
-    // Enviar mensaje (solo texto, como la tabla mensajes: contenido TEXT)
+    // 4. Elementos del chat
     const chatInput = document.getElementById('chat-input');
     const chatMessages = document.getElementById('chat-messages');
     const btnSend = document.getElementById('btn-send');
 
-    function sendMessage() {
-      const text = chatInput.value.trim();
-      if (!text) return;
+    function obtenerHora() {
+      const now = new Date();
+      return now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+    }
+    document.getElementById('welcome-time').textContent = obtenerHora();
 
-      // Mensaje del usuario (tabla mensajes: usuario_id, materia_id, contenido)
-      const userMsg = document.createElement('div');
-      userMsg.className = 'chat-message chat-message--user';
-      userMsg.innerHTML = `
-        <div class="chat-message__bubble">${text}</div>
-      `;
-      chatMessages.appendChild(userMsg);
+    // 5. Cargar historial previo de la base de datos
+    async function cargarHistorial() {
+      try {
+        const res = await fetch(`/api/historial?materia_id=${materiaId}`);
+        const data = await res.json();
+        if (data.ok && data.historial && data.historial.length > 0) {
+          data.historial.forEach(item => {
+            if (item.pregunta) agregarMensajeUsuario(item.pregunta);
+            if (item.respuesta) agregarMensajeAsistente(item.respuesta);
+          });
+        }
+      } catch (e) {
+        console.log('Sin historial previo');
+      }
+    }
+    cargarHistorial();
 
-      chatInput.value = '';
+    // 6. Agregar mensaje de usuario al DOM
+    function agregarMensajeUsuario(texto) {
+      const msg = document.createElement('div');
+      msg.className = 'chat-message chat-message--user';
+      msg.innerHTML = `<div class="chat-message__bubble">${escaparHTML(texto)}</div>`;
+      chatMessages.appendChild(msg);
       chatMessages.scrollTop = chatMessages.scrollHeight;
-
-      // Respuesta simulada del asistente (tabla respuestas: mensaje_id, contenido)
-      setTimeout(() => {
-        const botMsg = document.createElement('div');
-        botMsg.className = 'chat-message';
-        const now = new Date();
-        const time = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-        botMsg.innerHTML = `
-          <div class="chat-message__header">
-            <div class="chat-message__avatar">🤖</div>
-            <span class="chat-message__author">EduAsistente</span>
-            <span class="chat-message__time">${time}</span>
-          </div>
-          <div class="chat-message__bubble">
-            ¡Buena pregunta! Déjame explicarte paso a paso...
-          </div>
-          <div class="chat-message__actions">
-            <button class="chat-action-btn" aria-label="Copiar">📋 Copiar</button>
-          </div>
-        `;
-        chatMessages.appendChild(botMsg);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-      }, 800);
     }
 
-    btnSend.addEventListener('click', sendMessage);
+    // 7. Agregar mensaje del asistente al DOM
+    function agregarMensajeAsistente(texto) {
+      const msg = document.createElement('div');
+      msg.className = 'chat-message';
+      msg.innerHTML = `
+        <div class="chat-message__header">
+          <div class="chat-message__avatar">🤖</div>
+          <span class="chat-message__author">EduAsistente</span>
+          <span class="chat-message__time">${obtenerHora()}</span>
+        </div>
+        <div class="chat-message__bubble" style="white-space: pre-line;">${escaparHTML(texto)}</div>
+        <div class="chat-message__actions">
+          <button class="chat-action-btn" onclick="copiarMensaje(this)" aria-label="Copiar">📋 Copiar</button>
+        </div>
+      `;
+      chatMessages.appendChild(msg);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      return msg;
+    }
+
+    function escaparHTML(texto) {
+      const div = document.createElement('div');
+      div.textContent = texto;
+      return div.innerHTML;
+    }
+
+    window.copiarMensaje = function(btn) {
+      const card = btn.closest('.chat-message');
+      const bubble = card.querySelector('.chat-message__bubble');
+      if (bubble) {
+        navigator.clipboard.writeText(bubble.textContent.trim());
+        const original = btn.textContent;
+        btn.textContent = '✅ Copiado';
+        setTimeout(() => btn.textContent = original, 1500);
+      }
+    };
+
+    // 8. Enviar pregunta a la API de IA
+    async function enviarPregunta() {
+      const texto = chatInput.value.trim();
+      if (!texto) return;
+
+      agregarMensajeUsuario(texto);
+      chatInput.value = '';
+
+      // Mensaje de carga
+      const botMsg = agregarMensajeAsistente('Pensando la explicación paso a paso... ⏳');
+      btnSend.disabled = true;
+
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            materia_id: materiaId,
+            materia_nombre: materiaNombre,
+            pregunta: texto
+          })
+        });
+
+        const data = await res.json();
+        const bubble = botMsg.querySelector('.chat-message__bubble');
+
+        if (data.ok && data.respuesta) {
+          bubble.textContent = data.respuesta;
+        } else {
+          bubble.textContent = data.error || 'Lo siento, no pude procesar la respuesta en este momento.';
+        }
+      } catch (err) {
+        const bubble = botMsg.querySelector('.chat-message__bubble');
+        bubble.textContent = 'Hubo un error de conexión con el servidor.';
+      } finally {
+        btnSend.disabled = false;
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+    }
+
+    btnSend.addEventListener('click', enviarPregunta);
     chatInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') sendMessage();
+      if (e.key === 'Enter') enviarPregunta();
     });
 
-    // Copiar texto del mensaje al portapapeles
-    chatMessages.addEventListener('click', async (e) => {
-      const copyBtn = e.target.closest('.chat-action-btn');
-      if (!copyBtn) return;
-      const messageCard = copyBtn.closest('.chat-message');
-      const bubble = messageCard ? messageCard.querySelector('.chat-message__bubble') : null;
-      if (bubble) {
-        try {
-          await navigator.clipboard.writeText(bubble.textContent.trim());
-          const originalText = copyBtn.innerHTML;
-          copyBtn.innerHTML = '✅ Copiado';
-          setTimeout(() => {
-            copyBtn.innerHTML = originalText;
-          }, 1500);
-        } catch (err) {
-          console.error('Error al copiar texto:', err);
+    // 9. Botón rápido: Generar ejercicio de práctica (RF-08, RF-09, RF-10)
+    document.getElementById('btn-practice').addEventListener('click', async () => {
+      const botMsg = agregarMensajeAsistente('Generando un ejercicio de práctica para ti... 🎯');
+      try {
+        const res = await fetch('/api/ejercicio', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            materia_id: materiaId,
+            materia_nombre: materiaNombre
+          })
+        });
+        const data = await res.json();
+        if (data.ok && data.ejercicio) {
+          const ej = data.ejercicio;
+          const bubble = botMsg.querySelector('.chat-message__bubble');
+          bubble.innerHTML = `
+            <strong>📝 Ejercicio de Práctica:</strong><br><br>
+            ${escaparHTML(ej.enunciado)}
+            <div class="exercise-box">
+              <div class="exercise-box__title">Tu Respuesta:</div>
+              <input type="text" class="exercise-box__input" placeholder="Escribe tu respuesta aquí...">
+              <button class="exercise-box__btn" onclick="revisarEjercicio(this, '${ej.id || ''}', \`${escaparHTML(ej.enunciado)}\`, \`${escaparHTML(ej.respuesta_correcta || '')}\`)">
+                Verificar Respuesta
+              </button>
+              <div class="exercise-feedback" style="margin-top: 10px; font-weight: 600;"></div>
+            </div>
+          `;
         }
+      } catch (err) {
+        botMsg.querySelector('.chat-message__bubble').textContent = 'No se pudo generar el ejercicio en este momento.';
       }
+    });
+
+    // 10. Función para revisar ejercicio de práctica
+    window.revisarEjercicio = async function(btn, ejId, enunciado, respCorrecta) {
+      const container = btn.closest('.exercise-box');
+      const input = container.querySelector('.exercise-box__input');
+      const feedbackDiv = container.querySelector('.exercise-feedback');
+      const respuestaEstudiante = input.value.trim();
+
+      if (!respuestaEstudiante) {
+        feedbackDiv.textContent = 'Por favor escribe tu respuesta antes de verificar.';
+        feedbackDiv.style.color = '#e11d48';
+        return;
+      }
+
+      btn.disabled = true;
+      feedbackDiv.textContent = 'Revisando tu respuesta con el profesor virtual... 🔍';
+      feedbackDiv.style.color = '#2563eb';
+
+      try {
+        const res = await fetch('/api/revisar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ejercicio_id: ejId,
+            enunciado: enunciado,
+            respuesta: respuestaEstudiante,
+            respuesta_correcta: respCorrecta,
+            materia_nombre: materiaNombre
+          })
+        });
+
+        const data = await res.json();
+        if (data.ok) {
+          if (data.es_correcta) {
+            feedbackDiv.style.color = '#16a34a';
+            feedbackDiv.innerHTML = `✅ <strong>¡Excelente trabajo!</strong><br>${data.feedback}`;
+          } else {
+            feedbackDiv.style.color = '#dc2626';
+            feedbackDiv.innerHTML = `⚠️ <strong>Revisemos juntos:</strong><br>${data.feedback}`;
+          }
+        } else {
+          feedbackDiv.textContent = data.error || 'Error al revisar.';
+        }
+      } catch (err) {
+        feedbackDiv.textContent = 'Error al conectar con el revisor.';
+      } finally {
+        btn.disabled = false;
+      }
+    };
+
+    // 11. Botón rápido: Ejemplo sencillo
+    document.getElementById('btn-example').addEventListener('click', () => {
+      chatInput.value = `¿Puedes darme un ejemplo de la vida cotidiana sobre un tema de ${materiaNombre}?`;
+      enviarPregunta();
     });
   </script>
 

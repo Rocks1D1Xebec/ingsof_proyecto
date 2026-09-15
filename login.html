@@ -77,6 +77,11 @@
   </footer>
 
   <script>
+    // Verificar si ya tiene sesión activa
+    fetch('/api/sesion').then(r => r.json()).then(data => {
+      if (data.autenticado) window.location.href = 'dashboard.html';
+    }).catch(() => {});
+
     // Toggle password visibility
     const toggleBtn = document.getElementById('btn-toggle-password');
     const passwordInput = document.getElementById('input-password');
@@ -87,12 +92,63 @@
       toggleBtn.textContent = isPassword ? '🙈' : '👁';
     });
 
-    // Form submit
-    document.getElementById('form-login').addEventListener('submit', (e) => {
+    // Form submit — conecta con /api/login
+    const formLogin = document.getElementById('form-login');
+    const btnLogin = document.getElementById('btn-login');
+
+    formLogin.addEventListener('submit', async (e) => {
       e.preventDefault();
-      // Aquí iría la lógica de login
-      window.location.href = 'dashboard.html';
+
+      // Remover error previo
+      const prevError = formLogin.querySelector('.form-error');
+      if (prevError) prevError.remove();
+
+      const email = document.getElementById('input-email').value.trim();
+      const contrasena = passwordInput.value.trim();
+
+      if (!email || !contrasena) {
+        mostrarError('Por favor, completa todos los campos');
+        return;
+      }
+
+      // Deshabilitar botón mientras carga
+      btnLogin.disabled = true;
+      btnLogin.textContent = 'Entrando...';
+
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, contrasena }),
+        });
+
+        const data = await res.json();
+
+        if (data.ok) {
+          // Guardar nombre en localStorage para la UI
+          localStorage.setItem('usuario_nombre', data.usuario.nombre);
+          localStorage.setItem('usuario_id', data.usuario.id);
+          window.location.href = 'dashboard.html';
+        } else {
+          mostrarError(data.error || 'Error al iniciar sesión');
+        }
+      } catch (err) {
+        mostrarError('No se pudo conectar con el servidor. Intenta de nuevo.');
+      } finally {
+        btnLogin.disabled = false;
+        btnLogin.innerHTML = 'Entrar &nbsp;→';
+      }
     });
+
+    function mostrarError(msg) {
+      const prevError = formLogin.querySelector('.form-error');
+      if (prevError) prevError.remove();
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'form-error';
+      errorDiv.textContent = msg;
+      errorDiv.style.cssText = 'color:#ef4444;font-size:0.82rem;text-align:center;margin-top:12px;padding:10px;background:rgba(239,68,68,0.1);border-radius:8px;';
+      formLogin.appendChild(errorDiv);
+    }
   </script>
 
 </body>
