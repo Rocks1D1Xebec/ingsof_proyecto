@@ -1,9 +1,9 @@
 """
 gemini_helper.py
 ────────────────
-Helper para interactuar con Google Gemini API.
-Genera explicaciones pedagógicas paso a paso, ejercicios de práctica
-y revisión de respuestas con retroalimentación formativa.
+Helper para interactuar con la API de Google Gemini.
+Genera explicaciones paso a paso, ejercicios de práctica y revisión.
+Incluye respaldo automático entre modelos (gemini-2.5-flash, gemini-1.5-flash, etc.).
 """
 
 import os
@@ -13,9 +13,18 @@ from google import genai
 
 load_dotenv()
 
-# Configurar el cliente de Gemini
-client = genai.Client(api_key=os.getenv("API"))
-MODELO = "gemini-2.0-flash"
+# Modelos en orden de preferencia
+MODELOS_GEMINI = [
+    "gemini-2.5-flash",
+    "gemini-1.5-flash",
+    "gemini-2.0-flash-exp",
+    "gemini-1.5-pro",
+]
+
+def obtener_cliente():
+    """Obtiene el cliente de Gemini usando la variable de entorno API o GEMINI_API_KEY."""
+    api_key = os.getenv("API") or os.getenv("GEMINI_API_KEY")
+    return genai.Client(api_key=api_key)
 
 
 # ─── Prompts del sistema ────────────────────────────────────────
@@ -35,48 +44,65 @@ REGLAS FUNDAMENTALES:
 FORMATO DE RESPUESTAS:
 - Usa texto plano con saltos de línea claros
 - Para pasos usa: "Paso 1:", "Paso 2:", etc.
-- Para fórmulas usa formato simple: a² + b² = c²
+- Para fórmulas usa formato simple: v = d / t
 - Para listas usa viñetas con •
 """
 
 MATERIAS_CONTEXTO = {
-    "Matemáticas": "Eres experto en matemáticas de nivel secundaria: álgebra, aritmética, geometría, trigonometría, funciones, ecuaciones, estadística.",
-    "Física": "Eres experto en física de nivel secundaria: cinemática, dinámica, fuerzas, energía, trabajo, ondas, óptica, electricidad.",
-    "Química": "Eres experto en química de nivel secundaria: tabla periódica, enlaces químicos, reacciones, estequiometría, ácidos y bases, soluciones.",
-    "Lenguaje": "Eres experto en lenguaje y comunicación de nivel secundaria: gramática, ortografía, comprensión lectora, análisis de textos, redacción, literatura.",
+    "Matemáticas": "Eres experto en matemáticas de secundaria: álgebra, geometría, trigonometría, ecuaciones, funciones.",
+    "Física": "Eres experto en física de secundaria: cinemática (MRU, MRUV), dinámica, fuerzas, energía, velocidad, aceleración.",
+    "Química": "Eres experto en química de secundaria: tabla periódica, enlaces, reacciones químicas, estequiometría, átomos y moléculas.",
+    "Lenguaje": "Eres experto en lenguaje y literatura: gramática, ortografía, comprensión lectora, redacción y tipos de textos.",
 }
 
 
 def _obtener_contexto_materia(materia: str) -> str:
-    """Obtiene el contexto específico de la materia."""
-    return MATERIAS_CONTEXTO.get(materia, "Eres un tutor general de nivel secundaria.")
+    return MATERIAS_CONTEXTO.get(materia, "Eres un tutor escolar general de secundaria.")
+
+
+def _generar_con_fallback(contents, system_instruction: str, temperature: float = 0.7) -> str:
+    """Intenta generar contenido probando los modelos disponibles hasta que uno responda con éxito."""
+    client = obtener_cliente()
+    ultimo_error = None
+
+    for modelo in MODELOS_GEMINI:
+        try:
+            response = client.models.generate_content(
+                model=modelo,
+                contents=contents,
+                config={
+                    "system_instruction": system_instruction,
+                    "temperature": temperature,
+                },
+            )
+            if response and response.text:
+                return response.text
+        except Exception as e:
+            ultimo_error = e
+            # Si el modelo no está disponible, continúa con el siguiente de la lista
+            continue
+
+    raise Exception(f"No se pudo conectar con los modelos de Gemini. Detalle: {ultimo_error}")
 
 
 # ─── Explicar un tema / responder pregunta ──────────────────────
 def explicar_tema(pregunta: str, materia: str, historial: list | None = None) -> str:
-    """
-    Genera una explicación paso a paso para la pregunta del estudiante.
-    RF-05, RF-06, RF-07
-    """
+    """Genera una explicación paso a paso para la duda del estudiante."""
     contexto_materia = _obtener_contexto_materia(materia)
 
     prompt_usuario = f"""El estudiante está en la materia de {materia} y tiene esta duda:
 
 "{pregunta}"
 
-Responde siguiendo esta estructura:
-1. ¿De qué se trata? (Explica el concepto en palabras sencillas)
-2. ¿Qué datos o reglas necesitamos? (Fórmulas, propiedades o definiciones)
-3. Desarrollo paso a paso (Procedimiento detallado)
-4. Conclusión o resultado final
+Responde siguiendo esta estructura pedagógica:
+1. ¿De qué se trata? (Explica el concepto en palabras muy sencillas y con un ejemplo de la vida diaria)
+2. ¿Qué fórmulas o reglas necesitamos? (Si aplica)
+3. Explicación o desarrollo paso a paso
+4. Conclusión o resumen claro"""
 
-Si la pregunta es un ejercicio, resuélvelo paso a paso.
-Si es una duda conceptual, explica con ejemplos claros."""
-
-    # Construir mensajes del historial si existe
     mensajes = []
     if historial:
-        for h in historial[-6:]:  # Últimos 6 mensajes para contexto
+        for h in historial[-6:]:
             if h.get("pregunta"):
                 mensajes.append({"role": "user", "parts": [{"text": h["pregunta"]}]})
             if h.get("respuesta"):
@@ -85,127 +111,86 @@ Si es una duda conceptual, explica con ejemplos claros."""
     mensajes.append({"role": "user", "parts": [{"text": prompt_usuario}]})
 
     try:
-        response = client.models.generate_content(
-            model=MODELO,
+        return _generar_con_fallback(
             contents=mensajes,
-            config={
-                "system_instruction": f"{PROMPT_SISTEMA}\n\n{contexto_materia}",
-                "temperature": 0.7,
-                "max_output_tokens": 2048,
-            },
+            system_instruction=f"{PROMPT_SISTEMA}\n\n{contexto_materia}",
+            temperature=0.7,
         )
-        return response.text
     except Exception as e:
         return f"Lo siento, tuve un problema al procesar tu pregunta. Por favor intenta de nuevo. (Error: {str(e)})"
 
 
 # ─── Generar ejercicio de práctica ──────────────────────────────
 def generar_ejercicio(materia: str, tema: str = "") -> dict:
-    """
-    Genera un ejercicio de práctica para la materia.
-    RF-08
-    Retorna: {"enunciado": str, "respuesta_correcta": str, "explicacion": str}
-    """
+    """Genera un ejercicio práctico de la materia."""
     contexto_materia = _obtener_contexto_materia(materia)
+    tema_txt = f' sobre "{tema}"' if tema else ""
 
-    tema_instruccion = f' sobre el tema "{tema}"' if tema else ""
+    prompt = f"""Genera UN ejercicio de práctica de {materia}{tema_txt} para un estudiante de secundaria.
 
-    prompt = f"""Genera UN ejercicio de práctica de {materia}{tema_instruccion} para un estudiante de secundaria.
-
-IMPORTANTE: Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin bloques de código, con esta estructura exacta:
+IMPORTANTE: Responde ÚNICAMENTE con un JSON válido, sin bloques ```json, con esta estructura exacta:
 {{
-    "enunciado": "El enunciado completo del ejercicio",
+    "enunciado": "El enunciado del ejercicio",
     "respuesta_correcta": "La respuesta correcta (breve y concreta)",
     "explicacion": "Explicación paso a paso de cómo se resuelve"
-}}
-
-El ejercicio debe ser:
-- De dificultad básica-intermedia para un estudiante de secundaria
-- Claro y con datos concretos
-- Resoluble sin calculadora si es numérico"""
+}}"""
 
     try:
-        response = client.models.generate_content(
-            model=MODELO,
+        texto = _generar_con_fallback(
             contents=prompt,
-            config={
-                "system_instruction": f"{PROMPT_SISTEMA}\n\n{contexto_materia}",
-                "temperature": 0.8,
-                "max_output_tokens": 1024,
-            },
-        )
-        texto = response.text.strip()
-        # Limpiar posibles bloques de código markdown
+            system_instruction=f"{PROMPT_SISTEMA}\n\n{contexto_materia}",
+            temperature=0.8,
+        ).strip()
+
         if texto.startswith("```"):
-            texto = texto.split("\n", 1)[1]  # Quitar primera línea
-            texto = texto.rsplit("```", 1)[0]  # Quitar última línea
-            texto = texto.strip()
+            texto = texto.split("\n", 1)[1]
+            texto = texto.rsplit("```", 1)[0].strip()
 
         return json.loads(texto)
-    except (json.JSONDecodeError, Exception) as e:
+    except Exception as e:
         return {
-            "enunciado": f"Resuelve el siguiente problema de {materia}: Si tienes que practicar un tema, escribe tu duda y te generaré un ejercicio personalizado.",
-            "respuesta_correcta": "Pide un ejercicio específico",
-            "explicacion": f"No pude generar un ejercicio automáticamente. Error: {str(e)}",
+            "enunciado": f"Ejercicio de {materia}: Plantea un problema básico y escribe tu procedimiento para que lo revisemos juntos.",
+            "respuesta_correcta": "Procedimiento del estudiante",
+            "explicacion": f"Detalle: {str(e)}",
         }
 
 
 # ─── Revisar respuesta del estudiante ──────────────────────────
 def revisar_respuesta(enunciado: str, respuesta_estudiante: str,
                       respuesta_correcta: str, materia: str) -> dict:
-    """
-    Revisa la respuesta del estudiante y genera retroalimentación.
-    RF-09, RF-10
-    Retorna: {"es_correcta": bool, "feedback": str}
-    """
+    """Revisa la respuesta del estudiante y le da retroalimentación detallada."""
     contexto_materia = _obtener_contexto_materia(materia)
 
-    prompt = f"""El estudiante de {materia} resolvió este ejercicio:
+    prompt = f"""El estudiante de {materia} respondió a este ejercicio:
 
 ENUNCIADO: {enunciado}
 RESPUESTA CORRECTA: {respuesta_correcta}
 RESPUESTA DEL ESTUDIANTE: {respuesta_estudiante}
 
-Evalúa la respuesta y responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin bloques de código:
+Evalúa la respuesta y responde ÚNICAMENTE con un JSON válido:
 {{
     "es_correcta": true/false,
-    "feedback": "Tu retroalimentación aquí"
-}}
-
-Si es CORRECTA:
-- Felicita al estudiante con entusiasmo
-- Confirma brevemente por qué es correcta
-- Anímalo a seguir practicando
-
-Si tiene ERRORES:
-- Indica CON PRECISIÓN dónde se equivocó (ej: "Te equivocaste en el signo al despejar")
-- Muestra el procedimiento correcto paso a paso
-- Sé empático y motivador, nunca hagas sentir mal al estudiante
-- Termina con un mensaje de ánimo"""
+    "feedback": "Tu explicación aquí: si acertó felicítalo; si falló, muéstrale con cariño el paso donde se equivocó y cómo corregirlo."
+}}"""
 
     try:
-        response = client.models.generate_content(
-            model=MODELO,
+        texto = _generar_con_fallback(
             contents=prompt,
-            config={
-                "system_instruction": f"{PROMPT_SISTEMA}\n\n{contexto_materia}",
-                "temperature": 0.5,
-                "max_output_tokens": 1024,
-            },
-        )
-        texto = response.text.strip()
+            system_instruction=f"{PROMPT_SISTEMA}\n\n{contexto_materia}",
+            temperature=0.5,
+        ).strip()
+
         if texto.startswith("```"):
             texto = texto.split("\n", 1)[1]
-            texto = texto.rsplit("```", 1)[0]
-            texto = texto.strip()
+            texto = texto.rsplit("```", 1)[0].strip()
 
-        resultado = json.loads(texto)
+        res = json.loads(texto)
         return {
-            "es_correcta": bool(resultado.get("es_correcta", False)),
-            "feedback": resultado.get("feedback", "No pude evaluar tu respuesta."),
+            "es_correcta": bool(res.get("es_correcta", False)),
+            "feedback": res.get("feedback", "No pude evaluar la respuesta."),
         }
-    except (json.JSONDecodeError, Exception) as e:
+    except Exception as e:
         return {
             "es_correcta": False,
-            "feedback": f"No pude evaluar tu respuesta automáticamente. Por favor intenta de nuevo. (Error: {str(e)})",
+            "feedback": f"No se pudo evaluar automáticamente. Intenta de nuevo. ({str(e)})",
         }

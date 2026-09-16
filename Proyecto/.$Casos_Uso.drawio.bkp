@@ -1,0 +1,498 @@
+<mxfile host="Electron" modified="2026-09-15" agent="5.0" version="21.0.0">
+  <diagram name="General" id=" general overview">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <!-- Título -->
+        <mxCell id="title1" value="DIAGRAMA GENERAL DE CASOS DE USO - EduAsistente V1.0" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="280" y="20" width="600" height="40" as="geometry" />
+        </mxCell>
+        <!-- Ficha técnica -->
+        <mxCell id="ficha" value="&lt;b&gt;Proyecto:&lt;/b&gt; Asistente Web Móvil de Tutoría Académica Escolar&lt;br&gt;&lt;b&gt;Cliente:&lt;/b&gt; Yola Chávez Espinoza&lt;br&gt;&lt;b&gt;Versión:&lt;/b&gt; 1.0 (MVP)" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="30" y="70" width="350" height="70" as="geometry" />
+        </mxCell>
+        <!-- Actor Estudiante -->
+        <mxCell id="actor_est" value="" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1">
+          <mxGeometry x="60" y="200" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="actor_est_label" value="&lt;b&gt;Estudiante&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="35" y="285" width="90" height="30" as="geometry" />
+        </mxCell>
+        <!-- Límite del sistema -->
+        <mxCell id="sistema" value="&lt;b&gt;Sistema EduAsistente V1.0&lt;/b&gt;" style="shape=mxgraph.basic.rect;fillColor=none;strokeColor=#000000;strokeWidth=2;verticalAlign=top;html=1;fontSize=12;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="200" y="130" width="900" height="550" as="geometry" />
+        </mxCell>
+        <!-- CU-01 -->
+        <mxCell id="cu01" value="CU-01: Registrar Cuenta" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="240" y="170" width="180" height="50" as="geometry" />
+        </mxCell>
+        <!-- CU-02 -->
+        <mxCell id="cu02" value="CU-02: Iniciar Sesión" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="240" y="250" width="180" height="50" as="geometry" />
+        </mxCell>
+        <!-- CU-03 -->
+        <mxCell id="cu03" value="CU-03: Cerrar Sesión" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="240" y="330" width="180" height="50" as="geometry" />
+        </mxCell>
+        <!-- CU-04 -->
+        <mxCell id="cu04" value="CU-04: Seleccionar Materia" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="500" y="170" width="190" height="50" as="geometry" />
+        </mxCell>
+        <!-- CU-05 -->
+        <mxCell id="cu05" value="CU-05: Enviar Pregunta" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="500" y="250" width="190" height="50" as="geometry" />
+        </mxCell>
+        <!-- CU-06 -->
+        <mxCell id="cu06" value="CU-06: Recibir Explicación" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="500" y="330" width="190" height="50" as="geometry" />
+        </mxCell>
+        <!-- CU-07 -->
+        <mxCell id="cu07" value="CU-07: Solicitar Ejercicio" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="760" y="170" width="190" height="50" as="geometry" />
+        </mxCell>
+        <!-- CU-08 -->
+        <mxCell id="cu08" value="CU-08: Enviar Respuesta" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="760" y="250" width="190" height="50" as="geometry" />
+        </mxCell>
+        <!-- CU-09 -->
+        <mxCell id="cu09" value="CU-09: Revisar Respuesta" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="760" y="330" width="190" height="50" as="geometry" />
+        </mxCell>
+        <!-- Relaciones Estudiante → CU -->
+        <mxCell id="r1" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor_est" target="cu01" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r2" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor_est" target="cu02" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r3" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor_est" target="cu03" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r4" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor_est" target="cu04" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r5" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor_est" target="cu05" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r7" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor_est" target="cu07" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r8" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor_est" target="cu08" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- Include CU05 → CU06 -->
+        <mxCell id="inc1" value="&lt;&lt;include&gt;&gt;" style="edgeStyle=orthogonalEdgeStyle;dashed=1;" edge="1" source="cu05" target="cu06" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- Include CU08 → CU09 -->
+        <mxCell id="inc2" value="&lt;&lt;include&gt;&gt;" style="edgeStyle=orthogonalEdgeStyle;dashed=1;" edge="1" source="cu08" target="cu09" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- Leyenda -->
+        <mxCell id="leyenda" value="" style="shape=rect;fillColor=#f5f5f5;strokeColor=#666666;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="400" width="150" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="ley_tit" value="&lt;b&gt;LEYENDA&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="30" y="405" width="150" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="ley1" value="" style="shape=umlActor;verticalLabelPosition=right;verticalAlign=middle;html=1;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="40" y="430" width="20" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="ley1t" value="Actor" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="65" y="440" width="60" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="ley2" value="" style="ellipse;fillColor=none;strokeColor=#000000;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="40" y="460" width="20" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="ley2t" value="Caso de Uso" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="65" y="458" width="90" height="20" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram name="CU-01 Registrar Cuenta" id="cu01_page">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="t1" value="CU-01: REGISTRAR CUENTA DE USUARIO" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="350" y="20" width="400" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="actor" value="" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="180" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="actor_lbl" value="&lt;b&gt;Estudiante&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="55" y="265" width="90" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="boundary" value="&lt;b&gt;Sistema EduAsistente&lt;/b&gt;" style="shape=mxgraph.basic.rect;fillColor=none;strokeColor=#000000;strokeWidth=2;verticalAlign=top;html=1;fontSize=12;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="250" y="100" width="650" height="400" as="geometry" />
+        </mxCell>
+        <mxCell id="cu" value="Registrar Cuenta de Usuario" style="ellipse;whiteSpace=wrap;html=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="430" y="250" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor" target="cu" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- Pasos -->
+        <mxCell id="pasos" value="&lt;b&gt;Flujo Principal:&lt;/b&gt;&lt;br&gt;1. Ingresa a la página y pulsa &quot;Crear Cuenta&quot;&lt;br&gt;2. Sistema muestra formulario (Nombre, Email, Contraseña)&lt;br&gt;3. Usuario ingresa datos y presiona &quot;Registrarse&quot;&lt;br&gt;4. Sistema valida campos&lt;br&gt;5. Sistema registra cuenta en BD&lt;br&gt;6. Sistema confirma e inicia sesión automáticamente" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="270" y="430" width="610" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="pre" value="&lt;b&gt;Precondiciones:&lt;/b&gt; Conexión a internet, acceso al sistema desde celular" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="270" y="560" width="610" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="post" value="&lt;b&gt;Postcondiciones:&lt;/b&gt; Cuenta registrada y usuario autenticado" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="270" y="600" width="610" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram name="CU-02 Iniciar Sesión" id="cu02_page">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="t1" value="CU-02: INICIAR SESIÓN" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="350" y="20" width="400" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="actor" value="" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="180" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="actor_lbl" value="&lt;b&gt;Estudiante&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="55" y="265" width="90" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="boundary" value="&lt;b&gt;Sistema EduAsistente&lt;/b&gt;" style="shape=mxgraph.basic.rect;fillColor=none;strokeColor=#000000;strokeWidth=2;verticalAlign=top;html=1;fontSize=12;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="250" y="100" width="650" height="400" as="geometry" />
+        </mxCell>
+        <mxCell id="cu" value="Iniciar Sesión" style="ellipse;whiteSpace=wrap;html=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="450" y="250" width="180" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor" target="cu" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pasos" value="&lt;b&gt;Flujo Principal:&lt;/b&gt;&lt;br&gt;1. Estudiante abre la app en navegador móvil&lt;br&gt;2. Ingresa usuario/correo y contraseña&lt;br&gt;3. Presiona &quot;Entrar&quot;&lt;br&gt;4. Sistema valida credenciales en BD&lt;br&gt;5. Sistema autoriza acceso y muestra materias" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="270" y="430" width="610" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="alt" value="&lt;b&gt;Flujo Alternativo 4a:&lt;/b&gt; Credenciales incorrectas → Mensaje: &quot;Usuario o contraseña no coinciden&quot;" style="text;html=1;strokeColor=#CC0000;fillColor=#FFE0E0;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="270" y="540" width="610" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="pre" value="&lt;b&gt;Precondiciones:&lt;/b&gt; Tener una cuenta registrada (CU-01)" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="270" y="580" width="610" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="post" value="&lt;b&gt;Postcondiciones:&lt;/b&gt; Sesión activa del estudiante en el navegador" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="270" y="620" width="610" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram name="CU-03 Cerrar Sesión" id="cu03_page">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="t1" value="CU-03: CERRAR SESIÓN" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="350" y="20" width="400" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="actor" value="" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="180" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="actor_lbl" value="&lt;b&gt;Estudiante&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="55" y="265" width="90" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="boundary" value="&lt;b&gt;Sistema EduAsistente&lt;/b&gt;" style="shape=mxgraph.basic.rect;fillColor=none;strokeColor=#000000;strokeWidth=2;verticalAlign=top;html=1;fontSize=12;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="250" y="100" width="650" height="400" as="geometry" />
+        </mxCell>
+        <mxCell id="cu" value="Cerrar Sesión" style="ellipse;whiteSpace=wrap;html=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="450" y="250" width="180" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor" target="cu" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pasos" value="&lt;b&gt;Flujo Principal:&lt;/b&gt;&lt;br&gt;1. Estudiante toca &quot;Cerrar Sesión&quot; en la barra superior&lt;br&gt;2. Sistema destruye los datos de sesión en el navegador&lt;br&gt;3. Sistema redirige a la pantalla de inicio de sesión" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="270" y="430" width="610" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="pre" value="&lt;b&gt;Precondiciones:&lt;/b&gt; Sesión iniciada (CU-02)" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="270" y="520" width="610" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="post" value="&lt;b&gt;Postcondiciones:&lt;/b&gt; Sesión cerrada, no se puede acceder sin volver a identificarse" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="270" y="560" width="610" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram name="CU-04 Seleccionar Materia" id="cu04_page">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="t1" value="CU-04: SELECCIONAR MATERIA" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="350" y="20" width="400" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="actor" value="" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="180" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="actor_lbl" value="&lt;b&gt;Estudiante&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="55" y="265" width="90" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="boundary" value="&lt;b&gt;Sistema EduAsistente&lt;/b&gt;" style="shape=mxgraph.basic.rect;fillColor=none;strokeColor=#000000;strokeWidth=2;verticalAlign=top;html=1;fontSize=12;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="250" y="100" width="650" height="400" as="geometry" />
+        </mxCell>
+        <mxCell id="cu" value="Seleccionar Materia" style="ellipse;whiteSpace=wrap;html=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="440" y="250" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor" target="cu" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pasos" value="&lt;b&gt;Flujo Principal:&lt;/b&gt;&lt;br&gt;1. Sistema presenta cuadrícula con botones: Matemáticas, Física, Química, Lenguaje&lt;br&gt;2. Estudiante toca la materia que desea consultar&lt;br&gt;3. Sistema carga la pantalla del asistente con el contexto de la materia" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="270" y="430" width="610" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="alt" value="&lt;b&gt;Flujo Alternativo 3a:&lt;/b&gt; Cambiar de materia → Botón &quot;Cambiar de Materia&quot; vuelve al menú" style="text;html=1;strokeColor=#CC0000;fillColor=#FFE0E0;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="270" y="520" width="610" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="pre" value="&lt;b&gt;Precondiciones:&lt;/b&gt; Sesión activa (CU-02)" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="270" y="560" width="610" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="post" value="&lt;b&gt;Postcondiciones:&lt;/b&gt; Área de trabajo configurada con la materia elegida" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="270" y="600" width="610" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram name="CU-05 Enviar Pregunta" id="cu05_page">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="t1" value="CU-05: ENVIAR PREGUNTA SOBRE UN TEMA" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="300" y="20" width="500" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="actor" value="" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="180" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="actor_lbl" value="&lt;b&gt;Estudiante&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="55" y="265" width="90" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="boundary" value="&lt;b&gt;Sistema EduAsistente&lt;/b&gt;" style="shape=mxgraph.basic.rect;fillColor=none;strokeColor=#000000;strokeWidth=2;verticalAlign=top;html=1;fontSize=12;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="250" y="100" width="650" height="400" as="geometry" />
+        </mxCell>
+        <mxCell id="cu05" value="Enviar Pregunta sobre un Tema" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="310" y="200" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="cu06" value="Recibir Explicación Paso a Paso" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="580" y="200" width="210" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="cu07" value="Solicitar Ejercicio de Práctica" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="580" y="310" width="210" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor" target="cu05" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="inc1" value="&lt;&lt;include&gt;&gt;" style="edgeStyle=orthogonalEdgeStyle;dashed=1;" edge="1" source="cu05" target="cu06" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext1" value="&lt;&lt;extend&gt;&gt;" style="edgeStyle=orthogonalEdgeStyle;dashed=1;" edge="1" source="cu07" target="cu06" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pasos" value="&lt;b&gt;Flujo Principal:&lt;/b&gt;&lt;br&gt;1. Estudiante visualiza caja de texto &quot;Escribe aquí tu duda...&quot;&lt;br&gt;2. Redacta su duda o copia el enunciado&lt;br&gt;3. Presiona &quot;Preguntar&quot;&lt;br&gt;4. Sistema valida que el campo no esté vacío&lt;br&gt;5. Sistema envía la consulta → CU-06 (include)" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="270" y="430" width="610" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="alt" value="&lt;b&gt;Flujo Alternativo 4a:&lt;/b&gt; Campo vacío → &quot;Por favor escribe tu duda antes de presionar Preguntar&quot;" style="text;html=1;strokeColor=#CC0000;fillColor=#FFE0E0;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="270" y="540" width="610" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="pre" value="&lt;b&gt;Precondiciones:&lt;/b&gt; Materia seleccionada (CU-04)" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="270" y="580" width="610" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="post" value="&lt;b&gt;Postcondiciones:&lt;/b&gt; Pregunta registrada y despachada para explicación" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="270" y="620" width="610" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram name="CU-06 Recibir Explicación" id="cu06_page">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="t1" value="CU-06: RECIBIR EXPLICACIÓN PASO A PASO" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="300" y="20" width="500" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="actor" value="" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="180" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="actor_lbl" value="&lt;b&gt;Estudiante&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="55" y="265" width="90" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="sys" value="" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1">
+          <mxGeometry x="980" y="180" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="sys_lbl" value="&lt;b&gt;Sistema Asistente&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="950" y="265" width="100" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="boundary" value="&lt;b&gt;Sistema EduAsistente&lt;/b&gt;" style="shape=mxgraph.basic.rect;fillColor=none;strokeColor=#000000;strokeWidth=2;verticalAlign=top;html=1;fontSize=12;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="250" y="100" width="700" height="400" as="geometry" />
+        </mxCell>
+        <mxCell id="cu" value="Recibir Explicación Paso a Paso" style="ellipse;whiteSpace=wrap;html=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="440" y="250" width="250" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor" target="cu" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="cu" target="sys" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pasos" value="&lt;b&gt;Flujo Principal:&lt;/b&gt;&lt;br&gt;1. Sistema Asistente procesa la consulta según la materia&lt;br&gt;2. Organiza la respuesta paso a paso:&lt;br&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;• Paso 1: ¿De qué se trata? (concepto en palabras sencillas)&lt;br&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;• Paso 2: ¿Qué datos o reglas necesitamos?&lt;br&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;• Paso 3: Desarrollo paso a paso&lt;br&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;• Paso 4: Conclusión o resultado final&lt;br&gt;3. Sistema muestra la respuesta ordenada en pantalla&lt;br&gt;4. Habilita opción: &quot;Practicar un ejercicio sobre este tema&quot;" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="270" y="430" width="670" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="pre" value="&lt;b&gt;Precondiciones:&lt;/b&gt; Pregunta enviada (CU-05)" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="270" y="580" width="670" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="post" value="&lt;b&gt;Postcondiciones:&lt;/b&gt; Estudiante visualiza la explicación y tiene la base para asimilar el tema" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="270" y="620" width="670" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram name="CU-07 Solicitar Ejercicio" id="cu07_page">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="t1" value="CU-07: SOLICITAR EJERCICIO DE PRÁCTICA" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="300" y="20" width="500" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="actor" value="" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="180" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="actor_lbl" value="&lt;b&gt;Estudiante&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="55" y="265" width="90" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="sys" value="" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1">
+          <mxGeometry x="980" y="180" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="sys_lbl" value="&lt;b&gt;Sistema Asistente&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="950" y="265" width="100" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="boundary" value="&lt;b&gt;Sistema EduAsistente&lt;/b&gt;" style="shape=mxgraph.basic.rect;fillColor=none;strokeColor=#000000;strokeWidth=2;verticalAlign=top;html=1;fontSize=12;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="250" y="100" width="700" height="400" as="geometry" />
+        </mxCell>
+        <mxCell id="cu" value="Solicitar Ejercicio de Práctica" style="ellipse;whiteSpace=wrap;html=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="430" y="250" width="240" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor" target="cu" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="cu" target="sys" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pasos" value="&lt;b&gt;Flujo Principal:&lt;/b&gt;&lt;br&gt;1. Estudiante presiona &quot;Practicar este tema&quot; o &quot;Generar Ejercicio&quot;&lt;br&gt;2. Sistema Asistente formula un ejercicio práctico acorde a la materia y tema&lt;br&gt;3. Sistema muestra el enunciado y un espacio para ingresar la respuesta" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="270" y="430" width="670" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="pre" value="&lt;b&gt;Precondiciones:&lt;/b&gt; Haber recibido explicación (CU-06) o estar dentro de una materia" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="270" y="520" width="670" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="post" value="&lt;b&gt;Postcondiciones:&lt;/b&gt; Ejercicio activo en pantalla esperando respuesta del estudiante" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="270" y="560" width="670" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram name="CU-08 Enviar Respuesta" id="cu08_page">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="t1" value="CU-08: ENVIAR RESPUESTA DE EJERCICIO" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="300" y="20" width="500" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="actor" value="" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="180" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="actor_lbl" value="&lt;b&gt;Estudiante&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="55" y="265" width="90" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="boundary" value="&lt;b&gt;Sistema EduAsistente&lt;/b&gt;" style="shape=mxgraph.basic.rect;fillColor=none;strokeColor=#000000;strokeWidth=2;verticalAlign=top;html=1;fontSize=12;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="250" y="100" width="650" height="400" as="geometry" />
+        </mxCell>
+        <mxCell id="cu08" value="Enviar Respuesta de Ejercicio" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="310" y="200" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="cu09" value="Revisar Respuesta y Mostrar Errores" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="570" y="200" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor" target="cu08" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="inc1" value="&lt;&lt;include&gt;&gt;" style="edgeStyle=orthogonalEdgeStyle;dashed=1;" edge="1" source="cu08" target="cu09" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pasos" value="&lt;b&gt;Flujo Principal:&lt;/b&gt;&lt;br&gt;1. Estudiante resuelve el problema en su cuaderno&lt;br&gt;2. Escribe su resultado en el campo del celular&lt;br&gt;3. Presiona &quot;Revisar mi respuesta&quot;&lt;br&gt;4. Sistema comprueba que se ingresó texto&lt;br&gt;5. Sistema remite la respuesta → CU-09 (include)" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="270" y="430" width="610" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="pre" value="&lt;b&gt;Precondiciones:&lt;/b&gt; Ejercicio activo en pantalla (CU-07)" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="270" y="540" width="610" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="post" value="&lt;b&gt;Postcondiciones:&lt;/b&gt; Respuesta recibida para evaluación inmediata" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="270" y="580" width="610" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram name="CU-09 Revisar Respuesta" id="cu09_page">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="t1" value="CU-09: REVISAR RESPUESTA Y MOSTRAR ERRORES" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="280" y="20" width="550" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="actor" value="" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="180" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="actor_lbl" value="&lt;b&gt;Estudiante&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="55" y="265" width="90" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="sys" value="" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1">
+          <mxGeometry x="980" y="180" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="sys_lbl" value="&lt;b&gt;Sistema Asistente&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="950" y="265" width="100" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="boundary" value="&lt;b&gt;Sistema EduAsistente&lt;/b&gt;" style="shape=mxgraph.basic.rect;fillColor=none;strokeColor=#000000;strokeWidth=2;verticalAlign=top;html=1;fontSize=12;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="250" y="100" width="700" height="400" as="geometry" />
+        </mxCell>
+        <mxCell id="cu" value="Revisar Respuesta y Mostrar Errores" style="ellipse;whiteSpace=wrap;html=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="420" y="250" width="270" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor" target="cu" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="cu" target="sys" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- Flujo correcto -->
+        <mxCell id="fc" value="&lt;b&gt;Flujo Principal (Respuesta Correcta):&lt;/b&gt;&lt;br&gt;1. Sistema valida que el resultado es correcto&lt;br&gt;2. Muestra mensaje motivador y resumen del procedimiento&lt;br&gt;3. Ofrece opción de otro ejercicio o regresar al menú" style="text;html=1;strokeColor=#228B22;fillColor=#E0FFE0;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="270" y="430" width="320" height="80" as="geometry" />
+        </mxCell>
+        <!-- Flujo con errores -->
+        <mxCell id="fe" value="&lt;b&gt;Flujo Secundario (Respuesta con Errores):&lt;/b&gt;&lt;br&gt;1. Sistema detecta el fallo en la respuesta&lt;br&gt;2. Muestra retroalimentación formativa:&lt;br&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;• Dónde estuvo el error (ej: &quot;Te equivocaste en el signo&quot;)&lt;br&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;• Respuesta correcta explicada paso a paso&lt;br&gt;3. Ofrece opción de intentar otro ejercicio similar" style="text;html=1;strokeColor=#CC0000;fillColor=#FFE0E0;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="610" y="430" width="330" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="pre" value="&lt;b&gt;Precondiciones:&lt;/b&gt; Respuesta enviada (CU-08)" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="270" y="560" width="670" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="post" value="&lt;b&gt;Postcondiciones:&lt;/b&gt; Estudiante comprende el error y conoce la resolución correcta" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="270" y="600" width="670" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

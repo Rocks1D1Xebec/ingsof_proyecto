@@ -6,7 +6,7 @@
 ### FICHA TÉCNICA DEL PROYECTO
 - **Nombre del Sistema:** Asistente Web de Tutoría Académica Escolar (EduAsistente).
 - **Destinatarios Finales:** Estudiantes de nivel secundaria (con dificultades en Ciencias Exactas y Lenguaje).
-- **Cliente:** Madre de familia (desconoce de tecnología, no cuenta con apoyo externo, busca que sus hijos aprendan por sí mismos).
+- **Cliente:** Yola Chávez Espinoza (Madre de familia, desconoce de tecnología, no cuenta con apoyo externo, busca que sus hijos aprendan por sí mismos).
 - **Dispositivo Objetivo Exclusivo:** Teléfonos celulares inteligentes (Smartphones) mediante navegador web móvil.
 - **Versión del Documento:** 1.1 (Corregida y Depurada).
 - **Estado:** Aprobado para Diseño y Desarrollo de Versión 1 (MVP).

@@ -25,6 +25,9 @@ app = Flask(__name__)
 # Llave secreta para manejar las sesiones en el navegador
 app.secret_key = os.getenv("SECRET_KEY", "mi_clave_secreta_escolar_123")
 
+# Asegurar tablas y materias base en Cloudflare D1
+db.asegurar_inicializacion()
+
 
 # =====================================================================
 # RUTAS PARA SERVIR LAS PÁGINAS WEB (HTML, CSS, JS)

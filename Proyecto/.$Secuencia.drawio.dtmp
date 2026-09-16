@@ -1,0 +1,480 @@
+<mxfile host="Electron" agent="5.0" pages="6">
+  <diagram name="SEC-01 Registro" id="sec01">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="t1" value="SEC-01: SECUENCIA DE REGISTRO DE CUENTA (CU-01)" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="300" y="10" width="500" height="30" as="geometry" />
+        </mxCell>
+        <!-- Actores y objetos -->
+        <mxCell id="est" value=":Estudiante" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;size=40;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="100" y="60" width="100" height="660" as="geometry" />
+        </mxCell>
+        <mxCell id="ui" value=":InterfazWeb" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;size=40;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="320" y="60" width="100" height="660" as="geometry" />
+        </mxCell>
+        <mxCell id="ctrl" value=":Controlador" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;size=40;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="540" y="60" width="100" height="660" as="geometry" />
+        </mxCell>
+        <mxCell id="bd" value=":BaseDatos" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;size=40;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="760" y="60" width="100" height="660" as="geometry" />
+        </mxCell>
+        <!-- Mensajes -->
+        <mxCell id="m1" value="1: acceder a página()" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="150" y="140" as="sourcePoint" />
+            <mxPoint x="370" y="140" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m2" value="2: mostrarFormulario()" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="370" y="190" as="sourcePoint" />
+            <mxPoint x="150" y="190" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m3" value="3: ingresarDatos(nombre, email, pass)" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="150" y="250" as="sourcePoint" />
+            <mxPoint x="370" y="250" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m4" value="4: enviarRegistro()" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="370" y="300" as="sourcePoint" />
+            <mxPoint x="590" y="300" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m5" value="5: validarCampos()" style="html=1;verticalAlign=bottom;endArrow=open;endFill=0;dashed=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="590" y="340" as="sourcePoint" />
+            <mxPoint x="590" y="340" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="640" y="340" />
+              <mxPoint x="640" y="370" />
+              <mxPoint x="590" y="370" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m6" value="6: insertarUsuario()" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="590" y="410" as="sourcePoint" />
+            <mxPoint x="810" y="410" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m7" value="7: confirmar()" style="html=1;verticalAlign=bottom;endArrow=open;endFill=0;dashed=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="810" y="460" as="sourcePoint" />
+            <mxPoint x="590" y="460" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m8" value="8: mostrarConfirmación()" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="590" y="510" as="sourcePoint" />
+            <mxPoint x="370" y="510" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m9" value="9: mostrarPantallaMaterias()" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="370" y="560" as="sourcePoint" />
+            <mxPoint x="150" y="560" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <!-- Nota alternativa -->
+        <mxCell id="nota1" value="&lt;b&gt;Alt&lt;/b&gt;: campos vacíos → mostrar mensaje de error" style="shape=note;fillColor=#FFE0E0;strokeColor=#CC0000;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="650" y="310" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="nota2" value="&lt;b&gt;Alt&lt;/b&gt;: usuario ya existe → &quot;Inicia sesión&quot;" style="shape=note;fillColor=#FFE0E0;strokeColor=#CC0000;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="650" y="420" width="200" height="40" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="SEC-02 Login" id="sec02">
+    <mxGraphModel dx="1717" dy="1043" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="t1" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;fontStyle=1" value="SEC-02: SECUENCIA DE INICIO DE SESIÓN (CU-02)" vertex="1">
+          <mxGeometry height="30" width="500" x="300" y="10" as="geometry" />
+        </mxCell>
+        <mxCell id="est" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;size=40;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value=":Estudiante" vertex="1">
+          <mxGeometry height="560" width="100" x="100" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ui" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;size=40;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" value=":InterfazWeb" vertex="1">
+          <mxGeometry height="560" width="100" x="320" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ctrl" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;size=40;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" value=":Controlador" vertex="1">
+          <mxGeometry height="560" width="100" x="540" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="bd" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;size=40;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" value=":BaseDatos" vertex="1">
+          <mxGeometry height="560" width="100" x="760" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="m1" edge="1" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" value="1: abrirLogin()">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="150" y="140" as="sourcePoint" />
+            <mxPoint x="370" y="140" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m2" edge="1" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" value="2: mostrarFormularioLogin()">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="370" y="190" as="sourcePoint" />
+            <mxPoint x="150" y="190" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m3" edge="1" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" value="3: ingresarCredenciales(user, pass)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="150" y="250" as="sourcePoint" />
+            <mxPoint x="370" y="250" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m4" edge="1" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" value="4: autenticar()">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="370" y="300" as="sourcePoint" />
+            <mxPoint x="590" y="300" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m5" edge="1" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" value="5: buscarUsuario(user)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="590" y="350" as="sourcePoint" />
+            <mxPoint x="810" y="350" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m6" edge="1" parent="1" style="html=1;verticalAlign=bottom;endArrow=open;endFill=0;dashed=1;fontSize=10;" value="6: retornarDatos()">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="810" y="400" as="sourcePoint" />
+            <mxPoint x="590" y="400" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m7" edge="1" parent="1" style="html=1;verticalAlign=bottom;endArrow=open;endFill=0;dashed=1;fontSize=10;" value="7: sesiónValida()">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="590" y="450" as="sourcePoint" />
+            <mxPoint x="370" y="450" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m8" edge="1" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" value="8: mostrarMaterias()">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="370" y="500" as="sourcePoint" />
+            <mxPoint x="150" y="500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nota1" parent="1" style="shape=note;fillColor=#FFE0E0;strokeColor=#CC0000;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=9;" value="&lt;b&gt;Alt&lt;/b&gt;: credenciales incorrectas → mostrar &quot;Usuario o contraseña no coinciden&quot;" vertex="1">
+          <mxGeometry height="40" width="240" x="640" y="310" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="SEC-03 Logout" id="sec03">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="t1" value="SEC-03: SECUENCIA DE CIERRE DE SESIÓN (CU-03)" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="300" y="10" width="500" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="est" value=":Estudiante" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;size=40;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="150" y="60" width="100" height="410" as="geometry" />
+        </mxCell>
+        <mxCell id="ui" value=":InterfazWeb" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;size=40;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="400" y="60" width="100" height="410" as="geometry" />
+        </mxCell>
+        <mxCell id="ctrl" value=":Controlador" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;size=40;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="650" y="60" width="100" height="410" as="geometry" />
+        </mxCell>
+        <mxCell id="m1" value="1: pulsarCerrarSesión()" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="200" y="140" as="sourcePoint" />
+            <mxPoint x="450" y="140" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m2" value="2: destruirSesión()" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="450" y="200" as="sourcePoint" />
+            <mxPoint x="700" y="200" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m3" value="3: sesiónDestruida()" style="html=1;verticalAlign=bottom;endArrow=open;endFill=0;dashed=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="700" y="260" as="sourcePoint" />
+            <mxPoint x="450" y="260" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m4" value="4: redirigirLogin()" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="450" y="320" as="sourcePoint" />
+            <mxPoint x="200" y="320" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="SEC-04 Seleccionar Materia" id="sec04">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="t1" value="SEC-04: SECUENCIA DE SELECCIÓN DE MATERIA (CU-04)" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="280" y="10" width="550" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="est" value=":Estudiante" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;size=40;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="150" y="60" width="100" height="460" as="geometry" />
+        </mxCell>
+        <mxCell id="ui" value=":InterfazWeb" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;size=40;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="400" y="60" width="100" height="460" as="geometry" />
+        </mxCell>
+        <mxCell id="ctrl" value=":Controlador" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;size=40;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="650" y="60" width="100" height="460" as="geometry" />
+        </mxCell>
+        <mxCell id="m1" value="1: solicitarMaterias()" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="200" y="140" as="sourcePoint" />
+            <mxPoint x="450" y="140" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m2" value="2: obtenerMaterias()" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="450" y="190" as="sourcePoint" />
+            <mxPoint x="700" y="190" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m3" value="3: retornarLista([Mate, Física, Química, Lengua])" style="html=1;verticalAlign=bottom;endArrow=open;endFill=0;dashed=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="700" y="240" as="sourcePoint" />
+            <mxPoint x="450" y="240" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m4" value="4: mostrarCuadrículaMaterias()" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="450" y="290" as="sourcePoint" />
+            <mxPoint x="200" y="290" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m5" value="5: seleccionarMateria(materia)" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="200" y="350" as="sourcePoint" />
+            <mxPoint x="450" y="350" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m6" value="6: cargarContexto(materia)" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="450" y="400" as="sourcePoint" />
+            <mxPoint x="200" y="400" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="SEC-05 Consulta-Explicación" id="sec05">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="t1" value="SEC-05: SECUENCIA DE CONSULTA Y EXPLICACIÓN (CU-05 + CU-06)" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="250" y="10" width="600" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="est" value=":Estudiante" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;size=40;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="60" y="60" width="100" height="720" as="geometry" />
+        </mxCell>
+        <mxCell id="ui" value=":InterfazWeb" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;size=40;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="250" y="60" width="100" height="720" as="geometry" />
+        </mxCell>
+        <mxCell id="ctrl" value=":Controlador" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;size=40;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="440" y="60" width="100" height="720" as="geometry" />
+        </mxCell>
+        <mxCell id="ia" value=":ServicioIA" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;size=40;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="630" y="60" width="100" height="720" as="geometry" />
+        </mxCell>
+        <mxCell id="bd" value=":BaseDatos" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;size=40;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="820" y="60" width="100" height="720" as="geometry" />
+        </mxCell>
+        <!-- CU-05: Enviar Pregunta -->
+        <mxCell id="m1" value="1: enviarPregunta(texto)" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="110" y="140" as="sourcePoint" />
+            <mxPoint x="300" y="140" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m2" value="2: validarCampo()" style="html=1;verticalAlign=bottom;endArrow=open;endFill=0;dashed=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="300" y="180" as="sourcePoint" />
+            <mxPoint x="300" y="180" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="350" y="180" />
+              <mxPoint x="350" y="210" />
+              <mxPoint x="300" y="210" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m3" value="3: procesarConsulta()" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="300" y="250" as="sourcePoint" />
+            <mxPoint x="490" y="250" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <!-- CU-06: Recibir Explicación -->
+        <mxCell id="m4" value="4: generarExplicación(materia, pregunta)" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="490" y="310" as="sourcePoint" />
+            <mxPoint x="680" y="310" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m5" value="5: retornarExplicación()" style="html=1;verticalAlign=bottom;endArrow=open;endFill=0;dashed=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="680" y="370" as="sourcePoint" />
+            <mxPoint x="490" y="370" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m6" value="6: guardarConsulta()" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="490" y="420" as="sourcePoint" />
+            <mxPoint x="870" y="420" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m7" value="7: confirmar()" style="html=1;verticalAlign=bottom;endArrow=open;endFill=0;dashed=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="870" y="460" as="sourcePoint" />
+            <mxPoint x="490" y="460" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m8" value="8: mostrarExplicación4Pasos()" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="490" y="510" as="sourcePoint" />
+            <mxPoint x="300" y="510" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m9" value="9: mostrarPasosEnPantalla()" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="300" y="560" as="sourcePoint" />
+            <mxPoint x="110" y="560" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m10" value="10: mostrarBotónPracticar()" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="300" y="610" as="sourcePoint" />
+            <mxPoint x="110" y="610" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <!-- Bloque 4 pasos -->
+        <mxCell id="bloque4pasos" value="Explicación en 4 Pasos:&#xa;1. ¿De qué se trata?&#xa;2. ¿Qué datos/reglas necesitamos?&#xa;3. Desarrollo paso a paso&#xa;4. Conclusión" style="shape=note;fillColor=#f5f5f5;strokeColor=#666666;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="640" y="480" width="200" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="nota1" value="&lt;b&gt;Alt&lt;/b&gt;: campo vacío → &quot;Escribe tu duda antes de preguntar&quot;" style="shape=note;fillColor=#FFE0E0;strokeColor=#CC0000;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="330" y="185" width="230" height="35" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="SEC-06 Práctica Ejercicio" id="sec06">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="t1" value="SEC-06: SECUENCIA DE PRÁCTICA DE EJERCICIO (CU-07 + CU-08 + CU-09)" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="200" y="10" width="700" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="est" value=":Estudiante" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;size=40;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="60" y="60" width="100" height="810" as="geometry" />
+        </mxCell>
+        <mxCell id="ui" value=":InterfazWeb" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;size=40;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="250" y="60" width="100" height="810" as="geometry" />
+        </mxCell>
+        <mxCell id="ctrl" value=":Controlador" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;size=40;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="440" y="60" width="100" height="810" as="geometry" />
+        </mxCell>
+        <mxCell id="ia" value=":ServicioIA" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;size=40;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="630" y="60" width="100" height="810" as="geometry" />
+        </mxCell>
+        <mxCell id="bd" value=":BaseDatos" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;size=40;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="820" y="60" width="100" height="810" as="geometry" />
+        </mxCell>
+        <!-- CU-07: Solicitar Ejercicio -->
+        <mxCell id="m1" value="1: solicitarEjercicio(materia, tema)" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="110" y="140" as="sourcePoint" />
+            <mxPoint x="300" y="140" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m2" value="2: generarEjercicio()" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="300" y="190" as="sourcePoint" />
+            <mxPoint x="490" y="190" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m3" value="3: crearEjercicio(materia, tema)" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="490" y="240" as="sourcePoint" />
+            <mxPoint x="680" y="240" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m4" value="4: retornarEjercicio()" style="html=1;verticalAlign=bottom;endArrow=open;endFill=0;dashed=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="680" y="290" as="sourcePoint" />
+            <mxPoint x="490" y="290" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m5" value="5: mostrarEjercicio()" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="300" y="340" as="sourcePoint" />
+            <mxPoint x="110" y="340" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <!-- CU-08: Enviar Respuesta -->
+        <mxCell id="m6" value="6: enviarRespuesta(respuesta)" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="110" y="420" as="sourcePoint" />
+            <mxPoint x="300" y="420" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m7" value="7: validarRespuesta()" style="html=1;verticalAlign=bottom;endArrow=open;endFill=0;dashed=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="300" y="460" as="sourcePoint" />
+            <mxPoint x="300" y="460" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="350" y="460" />
+              <mxPoint x="350" y="490" />
+              <mxPoint x="300" y="490" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <!-- CU-09: Revisar Respuesta -->
+        <mxCell id="m8" value="8: evaluarRespuesta()" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="300" y="530" as="sourcePoint" />
+            <mxPoint x="490" y="530" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m9" value="9: compararConSolución()" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="490" y="580" as="sourcePoint" />
+            <mxPoint x="680" y="580" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m10" value="10: retornarResultado()" style="html=1;verticalAlign=bottom;endArrow=open;endFill=0;dashed=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="680" y="630" as="sourcePoint" />
+            <mxPoint x="490" y="630" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m11" value="11: guardarIntento()" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="490" y="670" as="sourcePoint" />
+            <mxPoint x="870" y="670" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m12" value="12: mostrarRetroalimentación()" style="html=1;verticalAlign=bottom;endArrow=block;endFill=1;fontSize=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="300" y="720" as="sourcePoint" />
+            <mxPoint x="110" y="720" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <!-- Alternativas -->
+        <mxCell id="alt_correcta" value="&lt;b&gt;Alt: Respuesta Correcta&lt;/b&gt;&#xa;• Mensaje motivador&#xa;• Resumen del procedimiento&#xa;• Opción: otro ejercicio o menú" style="shape=note;fillColor=#E0FFE0;strokeColor=#228B22;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="630" y="700" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="alt_error" value="&lt;b&gt;Alt: Respuesta con Errores&lt;/b&gt;&#xa;• Dónde estuvo el error&#xa;• Respuesta correcta paso a paso&#xa;• Opción: intentar otro ejercicio" style="shape=note;fillColor=#FFE0E0;strokeColor=#CC0000;align=left;verticalAlign=top;whiteSpace=wrap;rounded=1;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="630" y="770" width="200" height="60" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
