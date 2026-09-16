@@ -47,6 +47,13 @@ def servir_archivos(filename):
     return "Archivo no encontrado", 404
 
 
+@app.route("/api/modelos", methods=["GET"])
+def api_modelos():
+    """Consulta y devuelve los modelos de Gemini disponibles para tu API Key."""
+    modelos = gemini.obtener_lista_modelos_activos()
+    return jsonify({"ok": True, "total": len(modelos), "modelos": modelos})
+
+
 # =====================================================================
 # AUTENTICACIÓN SIMPLE (REGISTRO, LOGIN, SESIÓN, LOGOUT)
 # =====================================================================

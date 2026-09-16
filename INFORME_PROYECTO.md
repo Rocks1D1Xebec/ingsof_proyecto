@@ -45,7 +45,8 @@ ingsof_proyecto/
 │
 ├── main.py                   # Servidor Flask principal (Rutas y API)
 ├── cloudflare_d1.py          # Conexión simple a la base de datos Cloudflare D1
-├── gemini_helper.py          # Conexión y prompts para la IA de Gemini
+├── gemini_helper.py          # Conexión inteligente a modelos activos de Gemini
+├── listar_modelos.py         # Script para consultar los modelos disponibles en tu cuenta
 │
 ├── index.html                # Redirección inicial
 ├── login.html                # Pantalla de inicio de sesión
