@@ -75,7 +75,20 @@
       border-radius: 999px;
       opacity: 1;
       pointer-events: auto;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 10px 18px;
     }
+    /* Formato Markdown estilo GPT dentro de las burbujas */
+    .chat-message__bubble .md-h { font-weight: 800; margin: 10px 0 6px; line-height: 1.3; }
+    .chat-message__bubble h2.md-h { font-size: 1.05rem; }
+    .chat-message__bubble h3.md-h { font-size: 0.98rem; }
+    .chat-message__bubble h4.md-h { font-size: 0.92rem; }
+    .chat-message__bubble .md-ul, .chat-message__bubble .md-ol { margin: 6px 0 6px 18px; }
+    .chat-message__bubble .md-ul li, .chat-message__bubble .md-ol li { margin: 3px 0; }
+    .chat-message__bubble p { margin: 6px 0; }
+    .chat-message__bubble hr { border: none; border-top: 1px solid var(--border-color); margin: 10px 0; }
+    .chat-message__bubble code { background: rgba(127,127,127,0.15); padding: 1px 5px; border-radius: 5px; font-size: 0.85em; }
     #btn-back.chat-back--oculto {
       opacity: 0;
       pointer-events: none;
@@ -243,17 +256,25 @@
       if (ultimo) {
         ultimo.scrollIntoView({ block: 'end' });
         chatMessages.scrollTop = chatMessages.scrollHeight;
+        window.scrollTo(0, document.documentElement.scrollHeight);
       }
     }
 
-    // Botón "Cambiar materia": visible al inicio, se oculta al bajar y
-    // reaparece flotante al deslizar hacia arriba
+    // Botón "Cambiar materia": el scroll real lo hace la ventana (la página),
+    // no el contenedor, así que se escuchan AMBOS. Visible al inicio, se oculta
+    // al bajar y reaparece flotante al deslizar hacia arriba.
     const btnBack = document.getElementById('btn-back');
-    let ultimaPosScroll = 0;
-    chatMessages.addEventListener('scroll', () => {
-      const actual = chatMessages.scrollTop;
-      const distanciaAlFondo = chatMessages.scrollHeight - actual - chatMessages.clientHeight;
-      if (distanciaAlFondo < 120) {
+    let ultimaPosScroll = window.scrollY;
+    function alFondoDelChat() {
+      const fondoVentana = (window.innerHeight + window.scrollY) >=
+        (document.documentElement.scrollHeight - 120);
+      const fondoCont = (chatMessages.scrollHeight - chatMessages.scrollTop -
+        chatMessages.clientHeight) < 120;
+      return fondoVentana && fondoCont;
+    }
+    function onScrollChat() {
+      const actual = window.scrollY + chatMessages.scrollTop;
+      if (alFondoDelChat()) {
         // Al fondo: se oculta para no tapar el chat (reaparece al subir)
         btnBack.classList.add('chat-back--flotante', 'chat-back--oculto');
       } else if (actual < ultimaPosScroll) {
@@ -265,7 +286,9 @@
         btnBack.classList.add('chat-back--flotante', 'chat-back--oculto');
       }
       ultimaPosScroll = actual;
-    });
+    }
+    window.addEventListener('scroll', onScrollChat, { passive: true });
+    chatMessages.addEventListener('scroll', onScrollChat, { passive: true });
 
     // 6. Agregar mensaje de usuario al DOM
     function agregarMensajeUsuario(texto) {
@@ -294,7 +317,7 @@
           <span class="chat-message__author">EduAsistente</span>
           <span class="chat-message__time">${obtenerHora()}</span>
         </div>
-        <div class="chat-message__bubble" style="white-space: pre-line;">${contenidoHTML}${imgBlock}</div>
+        <div class="chat-message__bubble">${formatearMarkdown(contenidoHTML)}${imgBlock}</div>
         <div class="chat-message__actions">
           <button class="chat-action-btn" onclick="copiarMensaje(this)" aria-label="Copiar">📋 Copiar</button>
           <button class="chat-action-btn" onclick="practicarTema(this)" aria-label="Practicar este tema">🎯 Practicar este tema</button>
@@ -311,6 +334,61 @@
       const div = document.createElement('div');
       div.textContent = texto;
       return div.innerHTML;
+    }
+
+    // Convierte el Markdown de la IA (###, **negrita**, listas, ---) a HTML
+    // estilo chat GPT, protegiendo las fórmulas $...$ para KaTeX.
+    function formatearMarkdown(texto) {
+      if (!texto) return '';
+      // Imágenes viejas embebidas (BD anterior): se reemplazan por aviso
+      let src = String(texto).replace(
+        /<div class="chat-educational-image">[\s\S]*?<\/div>/g,
+        '\n\n🎨 *Ilustración educativa*\n\n'
+      );
+      let esc = escaparHTML(src);
+      // Extraer matemática a marcadores
+      const mates = [];
+      esc = esc.replace(/\$\$([\s\S]+?)\$\$|\$([^$\n]+?)\$/g, (m) => {
+        mates.push(m);
+        return ' ' + (mates.length - 1) + ' ';
+      });
+      const inline = (t) => t
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/(^|[^*\w])\*([^*\n]+)\*/g, '$1<em>$2</em>')
+        .replace(/`([^`\n]+)`/g, '<code>$1</code>')
+        .replace(/ (\d+) /g, (m, i) => mates[+i]);
+      const lineas = esc.split('\n');
+      let html = '', enUL = false, enOL = false;
+      const cerrar = () => {
+        if (enUL) { html += '</ul>'; enUL = false; }
+        if (enOL) { html += '</ol>'; enOL = false; }
+      };
+      for (const ln of lineas) {
+        const t = ln.trim();
+        let m;
+        if (/^(-{3,}|\*{3,}|_{3,})$/.test(t)) { cerrar(); html += '<hr>'; continue; }
+        if ((m = t.match(/^(#{1,4})\s+(.*)/))) {
+          cerrar();
+          const n = Math.min(m[1].length + 1, 3);
+          html += `<h${n} class="md-h">${inline(m[2])}</h${n}>`;
+          continue;
+        }
+        if ((m = t.match(/^[-•*]\s+(.*)/))) {
+          if (!enUL) { cerrar(); html += '<ul class="md-ul">'; enUL = true; }
+          html += `<li>${inline(m[1])}</li>`;
+          continue;
+        }
+        if ((m = t.match(/^(\d+)[.)]\s+(.*)/))) {
+          if (!enOL) { cerrar(); html += '<ol class="md-ol">'; enOL = true; }
+          html += `<li>${inline(m[2])}</li>`;
+          continue;
+        }
+        if (t === '') { cerrar(); continue; }
+        cerrar();
+        html += `<p>${inline(t)}</p>`;
+      }
+      cerrar();
+      return html;
     }
 
     // Renderiza fórmulas $...$ / $$...$$ con KaTeX (con fallback a texto si no hay CDN)
@@ -358,7 +436,7 @@
           const bubble = botMsg.querySelector('.chat-message__bubble');
           bubble.innerHTML = `
             <strong>📝 Ejercicio de Práctica:</strong><br><br>
-            ${escaparHTML(ej.enunciado)}
+            ${formatearMarkdown(ej.enunciado)}
             <div class="exercise-box">
               <div class="exercise-box__title">Tu Respuesta:</div>
               <input type="text" class="exercise-box__input" placeholder="Escribe tu respuesta aquí...">
@@ -410,7 +488,7 @@
         const bubble = botMsg.querySelector('.chat-message__bubble');
 
         if (data.ok && data.respuesta) {
-          bubble.innerHTML = data.respuesta + (data.imagen_url
+          bubble.innerHTML = formatearMarkdown(data.respuesta) + (data.imagen_url
             ? `<div class="chat-educational-image"><img src="${data.imagen_url}" alt="Ilustración educativa" loading="lazy" style="max-width:100%;border-radius:12px;margin:12px 0;box-shadow:0 4px 12px rgba(0,0,0,0.1);"><p style="font-size:0.8rem;color:#64748b;margin:0 0 10px 0;text-align:center;">🎨 Esquema visual explicativo</p></div>`
             : '');
           if (window.renderizarMatematicas) renderizarMatematicas(bubble);
@@ -502,10 +580,10 @@
         if (data.ok) {
           if (data.es_correcta) {
             feedbackDiv.style.color = '#16a34a';
-            feedbackDiv.innerHTML = `✅ <strong>¡Excelente trabajo!</strong><br>${data.feedback}`;
+            feedbackDiv.innerHTML = `✅ <strong>¡Excelente trabajo!</strong><br>${formatearMarkdown(data.feedback)}`;
           } else {
             feedbackDiv.style.color = '#dc2626';
-            feedbackDiv.innerHTML = `⚠️ <strong>Revisemos juntos:</strong><br>${data.feedback}`;
+            feedbackDiv.innerHTML = `⚠️ <strong>Revisemos juntos:</strong><br>${formatearMarkdown(data.feedback)}`;
           }
         } else {
           feedbackDiv.textContent = data.error || 'Error al revisar.';
