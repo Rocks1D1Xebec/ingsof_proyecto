@@ -6,6 +6,9 @@
   <meta name="description" content="EduAsistente - Chat de estudio interactivo con Inteligencia Artificial">
   <title>EduAsistente - Chat de Estudio</title>
   <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
   <style>
     /* Estilos adicionales simples para ejercicios en el chat */
     .exercise-box {
@@ -189,15 +192,18 @@
     }
     document.getElementById('welcome-time').textContent = obtenerHora();
 
-    // 5. Cargar historial previo de la base de datos
+    // 5. Cargar historial previo de la base de datos (texto + imagen_url separada)
     async function cargarHistorial() {
       try {
         const res = await fetch(`/api/historial?materia_id=${materiaId}`);
         const data = await res.json();
         if (data.ok && data.historial && data.historial.length > 0) {
           data.historial.forEach(item => {
-            if (item.pregunta) agregarMensajeUsuario(item.pregunta);
-            if (item.respuesta) agregarMensajeAsistente(item.respuesta);
+            if (item.pregunta) {
+              agregarMensajeUsuario(item.pregunta);
+              ultimaPregunta = item.pregunta;
+            }
+            if (item.respuesta) agregarMensajeAsistente(item.respuesta, item.imagen_url || null);
           });
         }
       } catch (e) {
@@ -215,23 +221,32 @@
       chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    // 7. Agregar mensaje del asistente al DOM
-    function agregarMensajeAsistente(texto) {
+    // Última pregunta del estudiante: se usa como contexto del botón "Practicar este tema" (CU-06 paso 4)
+    let ultimaPregunta = '';
+
+    // 7. Agregar mensaje del asistente al DOM (con soporte para texto formateado e imágenes educativas)
+    function agregarMensajeAsistente(contenidoHTML, imagenUrl) {
       const msg = document.createElement('div');
       msg.className = 'chat-message';
+      const imgBlock = imagenUrl
+        ? `<div class="chat-educational-image"><img src="${imagenUrl}" alt="Ilustración educativa" loading="lazy" style="max-width:100%;border-radius:12px;margin:12px 0;box-shadow:0 4px 12px rgba(0,0,0,0.1);"><p style="font-size:0.8rem;color:#64748b;margin:0 0 10px 0;text-align:center;">🎨 Esquema visual explicativo</p></div>`
+        : '';
       msg.innerHTML = `
         <div class="chat-message__header">
           <div class="chat-message__avatar">🤖</div>
           <span class="chat-message__author">EduAsistente</span>
           <span class="chat-message__time">${obtenerHora()}</span>
         </div>
-        <div class="chat-message__bubble" style="white-space: pre-line;">${escaparHTML(texto)}</div>
+        <div class="chat-message__bubble" style="white-space: pre-line;">${contenidoHTML}${imgBlock}</div>
         <div class="chat-message__actions">
           <button class="chat-action-btn" onclick="copiarMensaje(this)" aria-label="Copiar">📋 Copiar</button>
+          <button class="chat-action-btn" onclick="practicarTema(this)" aria-label="Practicar este tema">🎯 Practicar este tema</button>
+          <button class="chat-action-btn" onclick="ilustrarMensaje(this)" aria-label="Ver ilustración">🎨 Ver ilustración</button>
         </div>
       `;
       chatMessages.appendChild(msg);
       chatMessages.scrollTop = chatMessages.scrollHeight;
+      if (window.renderizarMatematicas) renderizarMatematicas(msg);
       return msg;
     }
 
@@ -240,6 +255,21 @@
       div.textContent = texto;
       return div.innerHTML;
     }
+
+    // Renderiza fórmulas $...$ / $$...$$ con KaTeX (con fallback a texto si no hay CDN)
+    window.renderizarMatematicas = function(elemento) {
+      try {
+        if (window.renderMathInElement && window.katex) {
+          renderMathInElement(elemento, {
+            delimiters: [
+              { left: '$$', right: '$$', display: true },
+              { left: '$', right: '$', display: false }
+            ],
+            throwOnError: false
+          });
+        }
+      } catch (e) { /* fallback: texto plano */ }
+    };
 
     window.copiarMensaje = function(btn) {
       const card = btn.closest('.chat-message');
@@ -252,12 +282,56 @@
       }
     };
 
+    // Genera un ejercicio; si se pasa tema usa contexto (botón por burbuja), si no es general (HU-07)
+    async function generarEjercicio(tema) {
+      const botMsg = agregarMensajeAsistente('Generando un ejercicio de práctica para ti... 🎯');
+      try {
+        const res = await fetch('/api/ejercicio', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            materia_id: materiaId,
+            materia_nombre: materiaNombre,
+            tema: tema || ''
+          })
+        });
+        const data = await res.json();
+        if (data.ok && data.ejercicio) {
+          const ej = data.ejercicio;
+          const bubble = botMsg.querySelector('.chat-message__bubble');
+          bubble.innerHTML = `
+            <strong>📝 Ejercicio de Práctica:</strong><br><br>
+            ${escaparHTML(ej.enunciado)}
+            <div class="exercise-box">
+              <div class="exercise-box__title">Tu Respuesta:</div>
+              <input type="text" class="exercise-box__input" placeholder="Escribe tu respuesta aquí...">
+              <button class="exercise-box__btn" onclick="revisarEjercicio(this, '${ej.id || ''}', \`${escaparHTML(ej.enunciado)}\`, \`${escaparHTML(ej.respuesta_correcta || '')}\`)">
+                Verificar Respuesta
+              </button>
+              <div class="exercise-feedback" style="margin-top: 10px; font-weight: 600;"></div>
+            </div>
+          `;
+          if (window.renderizarMatematicas) renderizarMatematicas(bubble);
+        } else if (res.status === 401 || res.status === 403) {
+          botMsg.querySelector('.chat-message__bubble').textContent = 'Debes iniciar sesión para practicar.';
+        }
+      } catch (err) {
+        botMsg.querySelector('.chat-message__bubble').textContent = 'No se pudo generar el ejercicio en este momento.';
+      }
+    }
+
+    // Botón contextual al final de cada explicación (CU-06 paso 4)
+    window.practicarTema = function(btn) {
+      generarEjercicio(ultimaPregunta);
+    };
+
     // 8. Enviar pregunta a la API de IA
     async function enviarPregunta() {
       const texto = chatInput.value.trim();
       if (!texto) return;
 
       agregarMensajeUsuario(texto);
+      ultimaPregunta = texto;
       chatInput.value = '';
 
       // Mensaje de carga
@@ -279,7 +353,10 @@
         const bubble = botMsg.querySelector('.chat-message__bubble');
 
         if (data.ok && data.respuesta) {
-          bubble.textContent = data.respuesta;
+          bubble.innerHTML = data.respuesta + (data.imagen_url
+            ? `<div class="chat-educational-image"><img src="${data.imagen_url}" alt="Ilustración educativa" loading="lazy" style="max-width:100%;border-radius:12px;margin:12px 0;box-shadow:0 4px 12px rgba(0,0,0,0.1);"><p style="font-size:0.8rem;color:#64748b;margin:0 0 10px 0;text-align:center;">🎨 Esquema visual explicativo</p></div>`
+            : '');
+          if (window.renderizarMatematicas) renderizarMatematicas(bubble);
         } else {
           bubble.textContent = data.error || 'Lo siento, no pude procesar la respuesta en este momento.';
         }
@@ -297,39 +374,41 @@
       if (e.key === 'Enter') enviarPregunta();
     });
 
-    // 9. Botón rápido: Generar ejercicio de práctica (RF-08, RF-09, RF-10)
-    document.getElementById('btn-practice').addEventListener('click', async () => {
-      const botMsg = agregarMensajeAsistente('Generando un ejercicio de práctica para ti... 🎯');
+    // 9. Botón rápido: ejercicio general de la materia (HU-07, sin tema previo)
+    document.getElementById('btn-practice').addEventListener('click', () => generarEjercicio(''));
+
+    // Botón manual de ilustración (auto + manual): pide imagen del último tema explicado
+    window.ilustrarMensaje = async function(btn) {
+      const card = btn.closest('.chat-message');
+      if (card.querySelector('.chat-educational-image')) return; // ya tiene imagen
+      const bubble = card.querySelector('.chat-message__bubble');
+      const original = btn.textContent;
+      btn.textContent = '⏳ Generando...';
+      btn.disabled = true;
       try {
-        const res = await fetch('/api/ejercicio', {
+        const res = await fetch('/api/ilustrar', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            materia_id: materiaId,
-            materia_nombre: materiaNombre
-          })
+          body: JSON.stringify({ materia_id: materiaId, tema: ultimaPregunta, texto: bubble.textContent.slice(0, 500) })
         });
         const data = await res.json();
-        if (data.ok && data.ejercicio) {
-          const ej = data.ejercicio;
-          const bubble = botMsg.querySelector('.chat-message__bubble');
-          bubble.innerHTML = `
-            <strong>📝 Ejercicio de Práctica:</strong><br><br>
-            ${escaparHTML(ej.enunciado)}
-            <div class="exercise-box">
-              <div class="exercise-box__title">Tu Respuesta:</div>
-              <input type="text" class="exercise-box__input" placeholder="Escribe tu respuesta aquí...">
-              <button class="exercise-box__btn" onclick="revisarEjercicio(this, '${ej.id || ''}', \`${escaparHTML(ej.enunciado)}\`, \`${escaparHTML(ej.respuesta_correcta || '')}\`)">
-                Verificar Respuesta
-              </button>
-              <div class="exercise-feedback" style="margin-top: 10px; font-weight: 600;"></div>
-            </div>
-          `;
+        if (data.ok && data.imagen_url) {
+          bubble.insertAdjacentHTML('beforeend',
+            `<div class="chat-educational-image"><img src="${data.imagen_url}" alt="Ilustración educativa" loading="lazy" style="max-width:100%;border-radius:12px;margin:12px 0;"><p style="font-size:0.8rem;color:#64748b;text-align:center;">🎨 Esquema visual explicativo</p></div>`);
+        } else {
+          btn.textContent = '😕 Sin imagen disponible';
+          setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 2000);
+          return;
         }
       } catch (err) {
-        botMsg.querySelector('.chat-message__bubble').textContent = 'No se pudo generar el ejercicio en este momento.';
+        btn.textContent = '😕 Sin conexión';
+        setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 2000);
+        return;
       }
-    });
+      btn.textContent = original;
+      btn.disabled = false;
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    };
 
     // 10. Función para revisar ejercicio de práctica
     window.revisarEjercicio = async function(btn, ejId, enunciado, respCorrecta) {
@@ -357,7 +436,8 @@
             enunciado: enunciado,
             respuesta: respuestaEstudiante,
             respuesta_correcta: respCorrecta,
-            materia_nombre: materiaNombre
+            materia_nombre: materiaNombre,
+            materia_id: materiaId
           })
         });
 

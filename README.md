@@ -55,6 +55,7 @@ ingsof_proyecto/
 │
 ├── main.py                   # Servidor web principal Flask y endpoints de la API
 ├── cloudflare_d1.py          # Módulo de conexión y consultas a Cloudflare D1
+├── cloudflare_ai.py          # Generador de imágenes educativas con Cloudflare Workers AI
 ├── gemini_helper.py          # Integración con Google Gemini (explicaciones y ejercicios)
 ├── listar_modelos.py         # Script para listar los modelos autorizados de Gemini
 │

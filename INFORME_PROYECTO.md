@@ -6,7 +6,7 @@
 
 El **Asistente Escolar (EduAsistente)** es una plataforma web interactiva diseñada para apoyar a estudiantes de secundaria que presentan dificultades académicas en materias fundamentales: **Matemáticas, Física, Química y Lenguaje**. Su propósito es funcionar como un tutor virtual paciente, amigable y motivador, capaz de explicar conceptos paso a paso, responder dudas sin tecnicismos innecesarios y ofrecer ejercicios de práctica con retroalimentación inmediata.
 
-El proyecto fue desarrollado bajo una filosofía de **código simple, funcional, robusto y fácil de entender a nivel educativo**, prescindiendo de algoritmos complejos de cifrado para facilitar su lectura y defensa académica.
+El proyecto fue desarrollado bajo una filosofía de **código simple, funcional, robusto y fácil de entender a nivel educativo**. Las contraseñas se guardan con hash `werkzeug` (con sal, estándar de la industria) y la documentación de análisis vive en `Proyecto/`.
 
 ---
 
@@ -26,6 +26,10 @@ El desarrollo implementa el 100% de los requisitos definidos en los documentos d
 | **RF-08 / CU-04** | **Generación de Ejercicios**: Crear problemas de práctica adaptados a la materia. | ✅ Completado | Botón interactivo en el chat conectado a `POST /api/ejercicio`. |
 | **RF-09 / CU-04** | **Revisión de Respuestas**: Evaluar si la respuesta del estudiante es correcta o no. | ✅ Completado | Módulo interactivo conectado a `POST /api/revisar`. |
 | **RF-10 / CU-04** | **Retroalimentación Formativa**: Mostrar con empatía en qué paso se equivocó. | ✅ Completado | Evaluación guiada por Gemini con consejos constructivos. |
+| **RF-11** | **Adaptación al nivel**: Nivel por materia deducido por la IA cada 20 mensajes (`nivel_usuario`). | ✅ Completado | `evaluar_nivel()` en `gemini_helper.py` + contexto en `/api/chat`. |
+| **RF-12** | **Técnica por asociación**: El estudiante describe cómo aprende y la IA adapta analogías. | ✅ Completado | Tarjeta en `dashboard.html` + `GET/PUT /api/perfil` (tabla `perfiles_aprendizaje`). |
+| **RF-13** | **Guardar progreso**: Intentos/aciertos por materia + la IA informa con datos reales al preguntar "¿cómo voy?". | ✅ Completado | Contadores en `nivel_usuario` + `respuestas_ejercicios`. |
+| **RNF-05** | **Protección**: Contraseñas con hash y sal. | ✅ Completado | `werkzeug.security` en `POST /api/register` y `/api/login`. |
 
 ---
 

@@ -31,6 +31,28 @@
     <h1 class="dashboard__title">¡Hola! ¿Qué materia vamos a estudiar hoy?</h1>
     <p class="dashboard__subtitle">Elige una para empezar a resolver tus dudas paso a paso.</p>
 
+    <!-- Perfil de aprendizaje (RF-12): dile a la IA cómo entiendes mejor -->
+    <div class="tip-banner" id="perfil-banner" style="flex-direction: column; align-items: stretch; gap: 8px;">
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <span class="tip-banner__icon">🧠</span>
+        <div>
+          <div class="tip-banner__title">Dile a la IA cómo entiendes mejor</div>
+          <div class="tip-banner__text">Cada uno aprende a su manera — ayúdame a ayudarte. Es opcional y puedes cambiarlo cuando quieras.</div>
+        </div>
+      </div>
+      <textarea
+        id="input-perfil"
+        rows="2"
+        maxlength="500"
+        placeholder="Ej. aprendo con ejemplos de cocina, fútbol o series... ¿con qué te gustaría relacionar tus estudios?"
+        style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; resize: vertical;"
+      ></textarea>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <button class="btn btn--primary" id="btn-save-perfil" style="padding: 8px 16px;">Guardar</button>
+        <span id="perfil-msg" style="font-size: 0.82rem; color: #64748b;"></span>
+      </div>
+    </div>
+
     <!-- Botón añadir materia -->
     <button class="btn btn--add" id="btn-add-subject" aria-label="Añadir materia">
       + &nbsp;Añadir Materia
@@ -126,6 +148,10 @@
       const grid = document.getElementById('subjects-grid');
       try {
         const res = await fetch('/api/materias');
+        if (res.status === 401) {
+          window.location.href = 'login.html';
+          return;
+        }
         const data = await res.json();
         
         if (data.ok && data.materias && data.materias.length > 0) {
@@ -237,7 +263,34 @@
       closeModal();
     });
 
-    // 4. Cerrar sesión
+    // 4. Perfil de aprendizaje: cargar y guardar (RF-12)
+    const inputPerfil = document.getElementById('input-perfil');
+    const btnPerfil = document.getElementById('btn-save-perfil');
+    const msgPerfil = document.getElementById('perfil-msg');
+
+    fetch('/api/perfil')
+      .then(res => res.json())
+      .then(data => {
+        if (data.ok && data.estilo) inputPerfil.value = data.estilo;
+      })
+      .catch(() => {});
+
+    btnPerfil.addEventListener('click', async () => {
+      msgPerfil.textContent = 'Guardando...';
+      try {
+        const res = await fetch('/api/perfil', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ estilo: inputPerfil.value.trim() })
+        });
+        const data = await res.json();
+        msgPerfil.textContent = data.ok ? '✅ La IA ya sabe cómo te gusta aprender' : (data.error || 'No se pudo guardar');
+      } catch (err) {
+        msgPerfil.textContent = 'Error de conexión';
+      }
+    });
+
+    // 5. Cerrar sesión
     document.getElementById('btn-logout').addEventListener('click', async () => {
       try {
         await fetch('/api/logout', { method: 'POST' });
