@@ -515,10 +515,15 @@
     // Botón manual de ilustración (auto + manual): pide imagen del último tema explicado
     window.ilustrarMensaje = async function(btn) {
       const card = btn.closest('.chat-message');
-      if (card.querySelector('.chat-educational-image')) return; // ya tiene imagen
-      const bubble = card.querySelector('.chat-message__bubble');
       const original = btn.textContent;
-      btn.textContent = '⏳ Generando...';
+      if (card.querySelector('.chat-educational-image')) {
+        // Antes: no hacía nada en silencio y parecía roto. Ahora avisa.
+        btn.textContent = '✅ Ya tiene ilustración';
+        setTimeout(() => { btn.textContent = original; }, 1500);
+        return;
+      }
+      const bubble = card.querySelector('.chat-message__bubble');
+      btn.textContent = '⏳ Generando (tarda ~15s)...';
       btn.disabled = true;
       try {
         const res = await fetch('/api/ilustrar', {

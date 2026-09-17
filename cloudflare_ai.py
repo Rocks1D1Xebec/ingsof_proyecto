@@ -24,22 +24,28 @@ MODELOS_IMAGEN = [
 ]
 
 
-def generar_imagen_educativa(prompt: str) -> str | None:
+def generar_imagen_educativa(prompt: str, rapido: bool = False) -> str | None:
     """
     Genera una imagen con Cloudflare Workers AI y la devuelve como un string Data URL
     listo para incrustar directamente en HTML (data:image/png;base64,...).
     Retorna None si no se pudo generar.
+
+    `rapido=True`: intenta solo el modelo más veloz (para no bloquear /api/chat).
+    `rapido=False`: prueba los 3 modelos (botón manual, el usuario ya espera).
+    Timeouts cortos: Render mata el worker a los ~30s; 25s x 3 = muerte segura.
     """
     account_id = os.getenv("CLOUDFLARE_ACCOUNT_ID") or ACCOUNT_ID
     api_token = os.getenv("CLOUDFLARE_API_TOKEN_IMAGEN") or os.getenv("CLOUDFLARE_API_TOKEN") or API_TOKEN
 
     if not account_id or not api_token:
+        print("Aviso imagen: faltan credenciales de Cloudflare (ACCOUNT_ID o API_TOKEN)")
         return None
 
     # Enriquecer el prompt para estilo didáctico y educativo
     prompt_enriquecido = f"Educational illustration, clean, clear diagram or cartoon style: {prompt}, high quality, vibrant colors"
 
-    for modelo in MODELOS_IMAGEN:
+    modelos = MODELOS_IMAGEN[:1] if rapido else MODELOS_IMAGEN
+    for modelo in modelos:
         url = f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/run/{modelo}"
         headers = {
             "Authorization": f"Bearer {api_token}",
@@ -48,10 +54,10 @@ def generar_imagen_educativa(prompt: str) -> str | None:
         body = {"prompt": prompt_enriquecido}
 
         try:
-            resp = requests.post(url, headers=headers, json=body, timeout=25)
+            resp = requests.post(url, headers=headers, json=body, timeout=12)
             if resp.status_code == 200:
                 img_b64 = None
-                
+
                 # Caso 1: JSON con Base64
                 try:
                     datos = resp.json()
@@ -66,6 +72,8 @@ def generar_imagen_educativa(prompt: str) -> str | None:
 
                 if img_b64:
                     return f"data:image/jpeg;base64,{img_b64}"
+            else:
+                print(f"Aviso imagen: {modelo} devolvió HTTP {resp.status_code}: {resp.text[:200]}")
         except Exception as err:
             print(f"Aviso al generar imagen con {modelo}:", err)
             continue

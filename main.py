@@ -287,8 +287,13 @@ def api_chat():
 
     if match_imagen:
         prompt_visual = match_imagen.group(1).strip()
-        # Generar imagen con Cloudflare Workers AI
-        img_data_url = cf_ai.generar_imagen_educativa(prompt_visual)
+        # Generar imagen con Cloudflare Workers AI (modo rápido: 1 modelo, 12s
+        # máximo, para no bloquear la respuesta del chat ni matar el worker)
+        try:
+            img_data_url = cf_ai.generar_imagen_educativa(prompt_visual, rapido=True)
+        except Exception as err:
+            print("Aviso imagen auto:", err)
+            img_data_url = None
         # Tope de tamaño: data-URLs gigantes reventaban D1/historial/RAM en Render
         if img_data_url and len(img_data_url) > 700_000:
             img_data_url = None
