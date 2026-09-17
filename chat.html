@@ -61,6 +61,26 @@
     .quick-btn:hover {
       background: #dbeafe;
     }
+    /* Botón "Cambiar materia": fijo arriba, se oculta al bajar y reaparece al subir */
+    #btn-back {
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    #btn-back.chat-back--flotante {
+      position: fixed;
+      top: 64px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 50;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+      border-radius: 999px;
+      opacity: 1;
+      pointer-events: auto;
+    }
+    #btn-back.chat-back--oculto {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(-50%) translateY(-8px);
+    }
   </style>
 </head>
 <body>
@@ -210,7 +230,42 @@
         console.log('Sin historial previo');
       }
     }
-    cargarHistorial();
+    cargarHistorial().then(() => {
+      // Al entrar, bajar directo al último mensaje de la IA (sin deslizamiento manual)
+      requestAnimationFrame(irAlUltimoMensaje);
+      setTimeout(irAlUltimoMensaje, 600); // re-ajusta tras KaTeX/imágenes
+    });
+    window.addEventListener('load', irAlUltimoMensaje);
+
+    function irAlUltimoMensaje() {
+      const mensajes = chatMessages.querySelectorAll('.chat-message');
+      const ultimo = mensajes[mensajes.length - 1];
+      if (ultimo) {
+        ultimo.scrollIntoView({ block: 'end' });
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+    }
+
+    // Botón "Cambiar materia": visible al inicio, se oculta al bajar y
+    // reaparece flotante al deslizar hacia arriba
+    const btnBack = document.getElementById('btn-back');
+    let ultimaPosScroll = 0;
+    chatMessages.addEventListener('scroll', () => {
+      const actual = chatMessages.scrollTop;
+      const distanciaAlFondo = chatMessages.scrollHeight - actual - chatMessages.clientHeight;
+      if (distanciaAlFondo < 120) {
+        // Al fondo: se oculta para no tapar el chat (reaparece al subir)
+        btnBack.classList.add('chat-back--flotante', 'chat-back--oculto');
+      } else if (actual < ultimaPosScroll) {
+        // Deslizando hacia arriba: mostrar flotante
+        btnBack.classList.add('chat-back--flotante');
+        btnBack.classList.remove('chat-back--oculto');
+      } else {
+        // Bajando: ocultar
+        btnBack.classList.add('chat-back--flotante', 'chat-back--oculto');
+      }
+      ultimaPosScroll = actual;
+    });
 
     // 6. Agregar mensaje de usuario al DOM
     function agregarMensajeUsuario(texto) {
