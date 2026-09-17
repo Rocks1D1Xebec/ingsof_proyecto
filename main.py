@@ -287,10 +287,10 @@ def api_chat():
 
     if match_imagen:
         prompt_visual = match_imagen.group(1).strip()
-        # Generar imagen con Cloudflare Workers AI (modo rápido: 1 modelo, 12s
-        # máximo, para no bloquear la respuesta del chat ni matar el worker)
+        # Generar imagen con Pollinations.ai (modo rápido: 512px, para no
+        # bloquear la respuesta del chat). Cloudflare queda en pausa.
         try:
-            img_data_url = cf_ai.generar_imagen_educativa(prompt_visual, rapido=True)
+            img_data_url = cf_ai.generar_imagen_pollinations(prompt_visual, rapido=True)
         except Exception as err:
             print("Aviso imagen auto:", err)
             img_data_url = None
@@ -328,7 +328,7 @@ def api_ilustrar():
     if not prompt:
         return jsonify({"ok": False, "error": "Indica un tema para ilustrar"}), 400
 
-    img = cf_ai.generar_imagen_educativa(prompt[:300])
+    img = cf_ai.generar_imagen_pollinations(prompt[:300])
     if not img:
         return jsonify({"ok": False, "error": "No se pudo generar la imagen en este momento"}), 502
     return jsonify({"ok": True, "imagen_url": img})

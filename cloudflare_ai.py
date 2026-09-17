@@ -8,6 +8,7 @@ que complementan las explicaciones de la IA para los estudiantes.
 
 import os
 import base64
+import urllib.parse
 import requests
 from dotenv import load_dotenv
 
@@ -15,6 +16,40 @@ load_dotenv()
 
 ACCOUNT_ID = os.getenv("CLOUDFLARE_ACCOUNT_ID")
 API_TOKEN = os.getenv("CLOUDFLARE_API_TOKEN")
+
+# Modelo de Pollinations.ai (env `pollination_imagenes`): flux | turbo.
+# Ver modelos disponibles en https://image.pollinations.ai/models
+POLLINATION_MODEL = (
+    os.getenv("POLLINATION_IMAGENES") or os.getenv("pollination_imagenes") or "flux"
+).strip() or "flux"
+
+
+def generar_imagen_pollinations(prompt: str, rapido: bool = False) -> str | None:
+    """Genera una imagen con Pollinations.ai (gratis, sin token) y la devuelve
+    como Data URL lista para el chat. Retorna None si falla.
+
+    `rapido=True`: imagen más chica (512px) para no bloquear /api/chat.
+    """
+    modelo = (os.getenv("POLLINATION_IMAGENES")
+              or os.getenv("pollination_imagenes") or POLLINATION_MODEL).strip() or "flux"
+    lado = 512 if rapido else 1024
+    prompt_enriquecido = (
+        f"Educational illustration, clean clear diagram, cartoon style: {prompt}, "
+        f"high quality, vibrant colors"
+    )
+    url = (f"https://image.pollinations.ai/prompt/{urllib.parse.quote(prompt_enriquecido)}"
+           f"?width={lado}&height={lado}&model={urllib.parse.quote(modelo)}"
+           f"&nologo=true&seed={os.getpid() % 100000}")
+
+    try:
+        resp = requests.get(url, timeout=60)
+        if resp.status_code == 200 and len(resp.content) > 1000:
+            b64 = base64.b64encode(resp.content).decode("utf-8")
+            return f"data:image/jpeg;base64,{b64}"
+        print(f"Aviso Pollinations: HTTP {resp.status_code}: {resp.text[:200]}")
+    except Exception as err:
+        print(f"Aviso al generar imagen con Pollinations ({modelo}):", err)
+    return None
 
 # Modelos recomendados de Text-to-Image en Cloudflare
 MODELOS_IMAGEN = [
