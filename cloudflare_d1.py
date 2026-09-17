@@ -50,6 +50,15 @@ def ejecutar_sql(sql: str, params: list | None = None) -> list[dict]:
         return []
 
 
+def _tiene_columna(tabla: str, columna: str) -> bool:
+    """Verifica si una columna ya existe (evita el ruido 'duplicate column' en D1)."""
+    try:
+        filas = ejecutar_sql(f"PRAGMA table_info({tabla})")
+        return any(f.get("name") == columna for f in filas)
+    except Exception:
+        return True  # ante la duda, no intentar el ALTER
+
+
 def asegurar_inicializacion():
     """Crea las tablas y materias base automáticamente si aún no existen."""
     try:
@@ -73,14 +82,13 @@ def asegurar_inicializacion():
             )
         """)
         # Migración aditiva para D1 viva: materias privadas por usuario
-        for _sql_mig in (
-            "ALTER TABLE materias ADD COLUMN usuario_id INTEGER",
-            "ALTER TABLE materias ADD COLUMN es_base INTEGER DEFAULT 0",
+        # (solo si falta la columna; ejecutar_sql no lanza excepción, solo avisa)
+        for _col, _sql_mig in (
+            ("usuario_id", "ALTER TABLE materias ADD COLUMN usuario_id INTEGER"),
+            ("es_base", "ALTER TABLE materias ADD COLUMN es_base INTEGER DEFAULT 0"),
         ):
-            try:
+            if not _tiene_columna("materias", _col):
                 ejecutar_sql(_sql_mig)
-            except Exception:
-                pass  # la columna ya existe en la D1 viva
         ejecutar_sql("""
             CREATE TABLE IF NOT EXISTS mensajes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -100,10 +108,8 @@ def asegurar_inicializacion():
             )
         """)
         # Asegurar columna imagen_url si la tabla ya existía
-        try:
+        if not _tiene_columna("respuestas", "imagen_url"):
             ejecutar_sql("ALTER TABLE respuestas ADD COLUMN imagen_url TEXT")
-        except Exception:
-            pass
 
         ejecutar_sql("""
             CREATE TABLE IF NOT EXISTS ejercicios (

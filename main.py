@@ -289,12 +289,12 @@ def api_chat():
         prompt_visual = match_imagen.group(1).strip()
         # Generar imagen con Cloudflare Workers AI
         img_data_url = cf_ai.generar_imagen_educativa(prompt_visual)
-        if img_data_url:
-            etiqueta_img = f'\n\n<div class="chat-educational-image"><img src="{img_data_url}" alt="Ilustración educativa" style="max-width:100%;border-radius:12px;margin:12px 0;box-shadow:0 4px 12px rgba(0,0,0,0.1);"><p style="font-size:0.8rem;color:#64748b;margin:0 0 10px 0;text-align:center;">🎨 Esquema visual explicativo</p></div>\n\n'
-            respuesta_ia = re.sub(patron_imagen, etiqueta_img, respuesta_ia, flags=re.IGNORECASE)
-        else:
-            # Si no se pudo generar la imagen, se quita la etiqueta limpiamente
-            respuesta_ia = re.sub(patron_imagen, "", respuesta_ia, flags=re.IGNORECASE)
+        # Tope de tamaño: data-URLs gigantes reventaban D1/historial/RAM en Render
+        if img_data_url and len(img_data_url) > 700_000:
+            img_data_url = None
+    # La imagen viaja SIEMPRE separada (columna imagen_url + JSON); el texto
+    # queda limpio para que el historial pese KB y no cientos de KB.
+    respuesta_ia = re.sub(patron_imagen, "", respuesta_ia, flags=re.IGNORECASE)
 
     # 5. Guardar la respuesta en la base de datos:
     #    contenido = texto limpio (sin base64 embebido), imagen_url = columna separada

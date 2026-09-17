@@ -108,8 +108,13 @@ def _obtener_contexto_materia(materia: str) -> str:
     return MATERIAS_CONTEXTO.get(materia, "Eres un tutor escolar general de secundaria.")
 
 
-def _generar_con_modelos(contents, system_instruction: str, temperature: float = 0.7) -> str:
-    """Intenta generar contenido probando con los modelos descubiertos en tu cuenta."""
+def _generar_con_modelos(contents, system_instruction: str, temperature: float = 0.7,
+                          max_tokens: int = 1200) -> str:
+    """Intenta generar contenido probando con los modelos descubiertos en tu cuenta.
+
+    `max_tokens` acota la respuesta: más rápido, menos memoria en Render free
+    y mejor para leer en celular.
+    """
     client = obtener_cliente()
     modelos_a_probar = obtener_lista_modelos_activos()
     ultimo_error = None
@@ -122,6 +127,7 @@ def _generar_con_modelos(contents, system_instruction: str, temperature: float =
                 config={
                     "system_instruction": system_instruction,
                     "temperature": temperature,
+                    "max_output_tokens": max_tokens,
                 },
             )
             if response and response.text:
@@ -131,6 +137,31 @@ def _generar_con_modelos(contents, system_instruction: str, temperature: float =
             continue
 
     raise Exception(f"Error con los modelos {modelos_a_probar}: {ultimo_error}")
+
+
+def _limpiar_historial(historial: list | None, max_mensajes: int = 6,
+                       max_chars: int = 600) -> list:
+    """Recorta el historial para la IA: sin HTML, sin imágenes base64/data-URL.
+
+    Evita que historiales viejos y pesados (ej. 648 KB) tumben el worker
+    de gunicorn en Render por falta de memoria/tiempo.
+    """
+    import re
+    limpio = []
+    for h in (historial or [])[-max_mensajes:]:
+        item = {}
+        for clave in ("pregunta", "respuesta"):
+            texto = str(h.get(clave) or "")
+            texto = re.sub(r"data:image/[^;]+;base64,[A-Za-z0-9+/=]+", "[imagen]", texto)
+            texto = re.sub(r"<[^>]+>", " ", texto)
+            texto = re.sub(r"\s+", " ", texto).strip()
+            if len(texto) > max_chars:
+                texto = texto[:max_chars] + "…"
+            if texto:
+                item[clave] = texto
+        if item:
+            limpio.append(item)
+    return limpio
 
 
 # ─── Explicar un tema / responder pregunta ──────────────────────
@@ -151,14 +182,13 @@ Responde siguiendo esta estructura:
 4. Conclusión o resumen claro{_bloque_personalizacion(perfil, prompt_nivel, nivel, stats)}"""
 
     mensajes = []
-    if historial:
-        for h in historial[-6:]:
-            if h.get("pregunta"):
-                mensajes.append({"role": "user", "parts": [{"text": h["pregunta"]}]})
-            if h.get("respuesta"):
-                mensajes.append({"role": "model", "parts": [{"text": h["respuesta"]}]})
+    for h in _limpiar_historial(historial):
+        if h.get("pregunta"):
+            mensajes.append({"role": "user", "parts": [{"text": h["pregunta"]}]})
+        if h.get("respuesta"):
+            mensajes.append({"role": "model", "parts": [{"text": h["respuesta"]}]})
 
-    mensajes.append({"role": "user", "parts": [{"text": prompt_usuario}]})
+    mensajes.append({"role": "user", "parts": [{"text": prompt_usuario[:2000]}]})
 
     try:
         return _generar_con_modelos(
@@ -179,11 +209,11 @@ def evaluar_nivel(materia: str, historial_reciente: list, intentos: int = 0,
     """
     contexto_materia = _obtener_contexto_materia(materia)
     muestra = []
-    for h in (historial_reciente or [])[-20:]:
+    for h in _limpiar_historial(historial_reciente, max_mensajes=20, max_chars=300):
         if h.get("pregunta"):
-            muestra.append(f"ESTUDIANTE: {str(h['pregunta'])[:300]}")
+            muestra.append(f"ESTUDIANTE: {h['pregunta']}")
         if h.get("respuesta"):
-            muestra.append(f"TUTOR: {str(h['respuesta'])[:300]}")
+            muestra.append(f"TUTOR: {h['respuesta']}")
     conversacion = "\n".join(muestra) or "(sin historial)"
     prompt = f"""Analiza esta conversación de {materia} y el rendimiento en ejercicios
 (intentos: {intentos}, aciertos: {aciertos}).
