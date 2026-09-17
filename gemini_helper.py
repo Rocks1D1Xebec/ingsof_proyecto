@@ -195,6 +195,8 @@ Responde siguiendo esta estructura:
             contents=mensajes,
             system_instruction=f"{PROMPT_SISTEMA}\n\n{contexto_materia}",
             temperature=0.7,
+            # Explicación en 4 pasos + fórmulas: necesita margen para no cortarse
+            max_tokens=3500,
         )
     except Exception as e:
         return f"Lo siento, tuve un problema al procesar tu pregunta. Por favor intenta de nuevo. (Detalle: {str(e)})"
@@ -231,6 +233,7 @@ Responde ÚNICAMENTE con un JSON válido:
             contents=prompt,
             system_instruction=f"{PROMPT_SISTEMA}\n\n{contexto_materia}",
             temperature=0.3,
+            max_tokens=500,  # solo un JSON corto
         ).strip()
         if texto.startswith("```"):
             texto = texto.split("\n", 1)[1]

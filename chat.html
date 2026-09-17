@@ -219,6 +219,8 @@
       msg.innerHTML = `<div class="chat-message__bubble">${escaparHTML(texto)}</div>`;
       chatMessages.appendChild(msg);
       chatMessages.scrollTop = chatMessages.scrollHeight;
+      if (window.renderizarMatematicas) renderizarMatematicas(msg);
+      return msg;
     }
 
     // Última pregunta del estudiante: se usa como contexto del botón "Practicar este tema" (CU-06 paso 4)
