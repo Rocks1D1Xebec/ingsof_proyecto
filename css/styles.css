@@ -894,3 +894,34 @@ input {
   color: #fff;
   border-color: #2563eb;
 }
+/* ===== Ilust choice: IA vs esquema texto ===== */
+.ilust-choice {
+  background: #f8fafc;
+  border: 1px dashed #93c5fd;
+  border-radius: 10px;
+  padding: 10px;
+  margin-top: 10px;
+}
+.ilust-choice__title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1e40af;
+  margin-bottom: 8px;
+  text-align: center;
+}
+.ilust-choice__btns {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+.ilust-choice__btn {
+  background: #2563eb;
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.ilust-choice__btn:last-child {
+  background: #0f766e;
+}

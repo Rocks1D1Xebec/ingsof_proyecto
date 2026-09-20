@@ -130,11 +130,6 @@
       </div>
     </div>
 
-    <!-- Aviso IA -->
-    <div class="ai-warning" id="ai-warning" role="note">
-      ⚠️ EduAsistente es una IA y puede equivocarse en texto e imágenes. Verifica los datos importantes con tu libro o profe.
-    </div>
-
     <!-- Mensajes del chat -->
     <div class="chat-messages" id="chat-messages">
       <!-- Mensaje inicial -->
@@ -320,7 +315,7 @@
       const etiquetas = extra && extra.etiquetas && extra.etiquetas.length
         ? `<p class="img-labels">🔬 ${extra.etiquetas.map(escaparHTML).join(' · ')}</p>` : '';
       const adv = extra && extra.advertencia ? escaparHTML(extra.advertencia)
-        : '🎨 Esquema visual explicativo — la IA puede equivocarse, verifica con tu libro o profe.';
+        : '🎨 Esquema visual explicativo.';
       const imgBlock = imagenUrl
         ? `<div class="chat-educational-image"><img src="${imagenUrl}" alt="Ilustración educativa" loading="lazy" style="max-width:100%;border-radius:12px;margin:12px 0;box-shadow:0 4px 12px rgba(0,0,0,0.1);">${etiquetas}<p style="font-size:0.8rem;color:#64748b;margin:0 0 10px 0;text-align:center;">${adv}</p></div>`
         : '';
@@ -331,7 +326,6 @@
           <span class="chat-message__time">${obtenerHora()}</span>
         </div>
         <div class="chat-message__bubble">${formatearMarkdown(contenidoHTML)}${imgBlock}</div>
-        <p class="ai-mini-warn">🤖 IA — puede cometer errores en texto e imágenes. Verifica datos importantes.</p>
         <div class="chat-message__actions">
           <button class="chat-action-btn" onclick="copiarMensaje(this)" aria-label="Copiar">📋 Copiar</button>
           <button class="chat-action-btn" onclick="practicarTema(this)" aria-label="Practicar este tema">🎯 Practicar este tema</button>
@@ -549,18 +543,92 @@
     });
     pintarToggle();
 
-    // Botón manual de ilustración con re-análisis: manda pregunta+respuesta completa
-    // y el modo elegido; el backend re-analiza con Gemini y genera coherente.
+    // Ver ilustración: el estudiante ELIGE entre Imagen IA o Esquema texto
+    // (dibujo plano con letras, sin IA generativa, 100% legible).
     window.ilustrarMensaje = async function(btn) {
       const card = btn.closest('.chat-message');
       const original = btn.textContent;
-      if (card.querySelector('.chat-educational-image')) {
-        // Antes: no hacía nada en silencio y parecía roto. Ahora avisa.
+      if (card.querySelector('.chat-educational-image') || card.querySelector('.ilust-choice')) {
         btn.textContent = '✅ Ya tiene ilustración';
         setTimeout(() => { btn.textContent = original; }, 1500);
         return;
       }
       const bubble = card.querySelector('.chat-message__bubble');
+      const choice = document.createElement('div');
+      choice.className = 'ilust-choice';
+      choice.innerHTML = `
+        <p class="ilust-choice__title">¿Cómo quieres visualizarlo?</p>
+        <div class="ilust-choice__btns">
+          <button type="button" class="ilust-choice__btn" data-op="ia">🎨 Imagen IA</button>
+          <button type="button" class="ilust-choice__btn" data-op="texto">✏️ Esquema texto</button>
+        </div>`;
+      bubble.appendChild(choice);
+      choice.querySelector('[data-op="ia"]').addEventListener('click', async (e) => {
+        e.preventDefault();
+        choice.remove();
+        await ilustrarConIA(card, bubble, btn, original);
+      });
+      choice.querySelector('[data-op="texto"]').addEventListener('click', async (e) => {
+        e.preventDefault();
+        choice.remove();
+        await ilustrarConTexto(card, bubble, btn, original);
+      });
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    };
+
+    // Dibuja un esquema de texto determinista (SVG con letras reales, sin IA).
+    function dibujarEsquemaSVG(titulo, etiquetas) {
+      const labs = (etiquetas || []).slice(0, 5);
+      const n = Math.max(labs.length, 2);
+      const W = 340, H = 190, cx = W / 2, cy = 95;
+      let nodos = '', lineas = '';
+      if (n === 2) {
+        const x1 = cx - 80, x2 = cx + 80;
+        lineas = `<line x1="${x1}" y1="${cy}" x2="${x2}" y2="${cy}" stroke="#2563eb" stroke-width="3"/>`;
+        nodos = `<circle cx="${x1}" cy="${cy}" r="34" fill="#dbeafe" stroke="#2563eb" stroke-width="3"/><text x="${x1}" y="${cy + 7}" text-anchor="middle" font-size="20" font-weight="800" fill="#1e3a8a">${escaparHTML(labs[0] || 'A')}</text>`
+          + `<circle cx="${x2}" cy="${cy}" r="34" fill="#fef3c7" stroke="#d97706" stroke-width="3"/><text x="${x2}" y="${cy + 7}" text-anchor="middle" font-size="20" font-weight="800" fill="#92400e">${escaparHTML(labs[1] || 'B')}</text>`;
+      } else {
+        const R = 75;
+        const pos = labs.map((_, i) => {
+          const a = (2 * Math.PI * i) / n - Math.PI / 2;
+          return { x: cx + R * Math.cos(a), y: cy + R * Math.sin(a) };
+        });
+        lineas = pos.map(p => `<line x1="${cx}" y1="${cy}" x2="${p.x}" y2="${p.y}" stroke="#2563eb" stroke-width="2.5"/>`).join('');
+        nodos = `<circle cx="${cx}" cy="${cy}" r="36" fill="#1e40af" stroke="#1e3a8a" stroke-width="3"/><text x="${cx}" y="${cy + 7}" text-anchor="middle" font-size="19" font-weight="800" fill="#fff">${escaparHTML(labs[0] || 'O')}</text>`
+          + pos.slice(1).map((p, i) => `<circle cx="${p.x}" cy="${p.y}" r="26" fill="#dbeafe" stroke="#2563eb" stroke-width="3"/><text x="${p.x}" y="${p.y + 6}" text-anchor="middle" font-size="17" font-weight="800" fill="#1e3a8a">${escaparHTML(labs[i + 1])}</text>`).join('');
+      }
+      return `<div class="chat-educational-image"><svg viewBox="0 0 ${W} ${H}" style="max-width:100%;background:#fff;border-radius:12px;border:1px solid #e2e8f0;" role="img" aria-label="Esquema de texto">${lineas}${nodos}</svg>`
+        + `<p style="font-size:0.85rem;font-weight:700;text-align:center;margin:6px 0 2px;">✏️ ${escaparHTML(titulo.slice(0, 90))}</p>`
+        + `<p style="font-size:0.75rem;color:#64748b;text-align:center;margin:0 0 8px;">Esquema de texto — dibujo con letras, sin IA generativa</p></div>`;
+    }
+
+    async function ilustrarConTexto(card, bubble, btn, original) {
+      btn.textContent = '⏳ Armando esquema...';
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/esquema', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            materia_id: materiaId,
+            materia_nombre: materiaNombre,
+            pregunta: ultimaPregunta,
+            respuesta: bubble.textContent.slice(0, 4000)
+          })
+        });
+        const data = await res.json();
+        const etiquetas = (data.ok && data.etiquetas && data.etiquetas.length) ? data.etiquetas
+          : [materiaNombre.slice(0, 1), 'A', 'B'];
+        bubble.insertAdjacentHTML('beforeend', dibujarEsquemaSVG(ultimaPregunta || materiaNombre, etiquetas));
+      } catch (err) {
+        bubble.insertAdjacentHTML('beforeend', dibujarEsquemaSVG(ultimaPregunta || materiaNombre, ['A', 'B']));
+      }
+      btn.textContent = original;
+      btn.disabled = false;
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    async function ilustrarConIA(card, bubble, btn, original) {
       const modo = obtenerModo();
       btn.textContent = modo === 'preciso' ? '⏳ Analizando y dibujando preciso...' : '⏳ Analizando y dibujando creativo...';
       btn.disabled = true;

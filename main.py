@@ -356,6 +356,35 @@ def api_ilustrar():
     })
 
 
+@app.route("/api/esquema", methods=["POST"])
+def api_esquema():
+    """Devuelve etiquetas para el esquema de texto (sin generar imagen IA).
+
+    El frontend dibuja un SVG determinista con letras reales.
+    """
+    usuario_id = session.get("usuario_id")
+    if not usuario_id:
+        return jsonify({"ok": False, "error": "Debes iniciar sesión"}), 401
+    data = request.get_json() or {}
+    pregunta = (data.get("pregunta") or "").strip()[:500]
+    respuesta = (data.get("respuesta") or "").strip()[:4000]
+    materia_nombre = (data.get("materia_nombre") or "General").strip()
+    if not (pregunta or respuesta):
+        return jsonify({"ok": False, "error": "Indica un tema"}), 400
+    try:
+        plan = gemini.generar_prompt_imagen(pregunta, respuesta, materia_nombre, "preciso")
+    except Exception as err:
+        print("Aviso esquema:", err)
+        plan = {"prompt_en": pregunta or respuesta[:200], "etiquetas": [], "estilo": "lineal"}
+    etiquetas = plan.get("etiquetas") or []
+    if not etiquetas:
+        # Fallback: iniciales de la pregunta como etiquetas legibles
+        palabras = [p for p in __import__("re").sub(r"[^A-Za-zÁÉÍÓÚáéíóúÑñ ]", " ", pregunta).split() if len(p) > 2][:3]
+        etiquetas = [(p[0] or "A").upper() for p in palabras] or ["A", "B"]
+    return jsonify({"ok": True, "etiquetas": etiquetas[:5],
+                    "prompt_en": plan.get("prompt_en", "")})
+
+
 @app.route("/api/historial", methods=["GET"])
 def api_historial():
     """Devuelve las preguntas y respuestas anteriores de una materia."""
