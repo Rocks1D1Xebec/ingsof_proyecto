@@ -130,6 +130,11 @@
       </div>
     </div>
 
+    <!-- Aviso IA -->
+    <div class="ai-warning" id="ai-warning" role="note">
+      ⚠️ EduAsistente es una IA y puede equivocarse en texto e imágenes. Verifica los datos importantes con tu libro o profe.
+    </div>
+
     <!-- Mensajes del chat -->
     <div class="chat-messages" id="chat-messages">
       <!-- Mensaje inicial -->
@@ -145,10 +150,14 @@
       </div>
     </div>
 
-    <!-- Acciones rápidas (Ejercicios de práctica) -->
+    <!-- Acciones rápidas (Ejercicios de práctica + modo de imagen) -->
     <div class="chat-quick-actions">
       <button class="quick-btn" id="btn-practice">🎯 Dame un ejercicio de práctica</button>
       <button class="quick-btn" id="btn-example">💡 Dame un ejemplo sencillo</button>
+      <div class="img-mode-toggle" role="group" aria-label="Modo de ilustración">
+        <button class="img-mode-btn" id="mode-preciso" type="button">🎯 Preciso</button>
+        <button class="img-mode-btn" id="mode-creativo" type="button">🎨 Creativo</button>
+      </div>
     </div>
 
     <!-- Barra de entrada -->
@@ -305,11 +314,15 @@
     let ultimaPregunta = '';
 
     // 7. Agregar mensaje del asistente al DOM (con soporte para texto formateado e imágenes educativas)
-    function agregarMensajeAsistente(contenidoHTML, imagenUrl) {
+    function agregarMensajeAsistente(contenidoHTML, imagenUrl, extra) {
       const msg = document.createElement('div');
       msg.className = 'chat-message';
+      const etiquetas = extra && extra.etiquetas && extra.etiquetas.length
+        ? `<p class="img-labels">🔬 ${extra.etiquetas.map(escaparHTML).join(' · ')}</p>` : '';
+      const adv = extra && extra.advertencia ? escaparHTML(extra.advertencia)
+        : '🎨 Esquema visual explicativo — la IA puede equivocarse, verifica con tu libro o profe.';
       const imgBlock = imagenUrl
-        ? `<div class="chat-educational-image"><img src="${imagenUrl}" alt="Ilustración educativa" loading="lazy" style="max-width:100%;border-radius:12px;margin:12px 0;box-shadow:0 4px 12px rgba(0,0,0,0.1);"><p style="font-size:0.8rem;color:#64748b;margin:0 0 10px 0;text-align:center;">🎨 Esquema visual explicativo</p></div>`
+        ? `<div class="chat-educational-image"><img src="${imagenUrl}" alt="Ilustración educativa" loading="lazy" style="max-width:100%;border-radius:12px;margin:12px 0;box-shadow:0 4px 12px rgba(0,0,0,0.1);">${etiquetas}<p style="font-size:0.8rem;color:#64748b;margin:0 0 10px 0;text-align:center;">${adv}</p></div>`
         : '';
       msg.innerHTML = `
         <div class="chat-message__header">
@@ -318,6 +331,7 @@
           <span class="chat-message__time">${obtenerHora()}</span>
         </div>
         <div class="chat-message__bubble">${formatearMarkdown(contenidoHTML)}${imgBlock}</div>
+        <p class="ai-mini-warn">🤖 IA — puede cometer errores en texto e imágenes. Verifica datos importantes.</p>
         <div class="chat-message__actions">
           <button class="chat-action-btn" onclick="copiarMensaje(this)" aria-label="Copiar">📋 Copiar</button>
           <button class="chat-action-btn" onclick="practicarTema(this)" aria-label="Practicar este tema">🎯 Practicar este tema</button>
@@ -512,7 +526,31 @@
     // 9. Botón rápido: ejercicio general de la materia (HU-07, sin tema previo)
     document.getElementById('btn-practice').addEventListener('click', () => generarEjercicio(''));
 
-    // Botón manual de ilustración (auto + manual): pide imagen del último tema explicado
+    // Modo de ilustración elegido por el estudiante: persistente por materia.
+    // Default: Preciso en ciencias, Creativo en Lenguaje.
+    const MODO_KEY = 'modo_imagen_' + materiaNombre;
+    function modoDefault() {
+      return (materiaNombre === 'Lenguaje') ? 'creativo' : 'preciso';
+    }
+    function obtenerModo() {
+      const m = localStorage.getItem(MODO_KEY) || modoDefault();
+      return (m === 'creativo') ? 'creativo' : 'preciso';
+    }
+    function pintarToggle() {
+      const m = obtenerModo();
+      document.getElementById('mode-preciso').classList.toggle('active', m === 'preciso');
+      document.getElementById('mode-creativo').classList.toggle('active', m === 'creativo');
+    }
+    document.getElementById('mode-preciso').addEventListener('click', () => {
+      localStorage.setItem(MODO_KEY, 'preciso'); pintarToggle();
+    });
+    document.getElementById('mode-creativo').addEventListener('click', () => {
+      localStorage.setItem(MODO_KEY, 'creativo'); pintarToggle();
+    });
+    pintarToggle();
+
+    // Botón manual de ilustración con re-análisis: manda pregunta+respuesta completa
+    // y el modo elegido; el backend re-analiza con Gemini y genera coherente.
     window.ilustrarMensaje = async function(btn) {
       const card = btn.closest('.chat-message');
       const original = btn.textContent;
@@ -523,18 +561,28 @@
         return;
       }
       const bubble = card.querySelector('.chat-message__bubble');
-      btn.textContent = '⏳ Generando (tarda ~15s)...';
+      const modo = obtenerModo();
+      btn.textContent = modo === 'preciso' ? '⏳ Analizando y dibujando preciso...' : '⏳ Analizando y dibujando creativo...';
       btn.disabled = true;
       try {
         const res = await fetch('/api/ilustrar', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ materia_id: materiaId, tema: ultimaPregunta, texto: bubble.textContent.slice(0, 500) })
+          body: JSON.stringify({
+            materia_id: materiaId,
+            materia_nombre: materiaNombre,
+            pregunta: ultimaPregunta,
+            respuesta: bubble.textContent.slice(0, 4000),
+            modo: modo
+          })
         });
         const data = await res.json();
         if (data.ok && data.imagen_url) {
+          const etiquetas = (data.etiquetas || []).length
+            ? `<p class="img-labels">🔬 ${data.etiquetas.map(escaparHTML).join(' · ')}</p>` : '';
+          const adv = escaparHTML(data.advertencia || 'Imagen generada por IA, puede contener errores. Verifica con tu libro o profe.');
           bubble.insertAdjacentHTML('beforeend',
-            `<div class="chat-educational-image"><img src="${data.imagen_url}" alt="Ilustración educativa" loading="lazy" style="max-width:100%;border-radius:12px;margin:12px 0;"><p style="font-size:0.8rem;color:#64748b;text-align:center;">🎨 Esquema visual explicativo</p></div>`);
+            `<div class="chat-educational-image"><img src="${data.imagen_url}" alt="Ilustración educativa (${modo})" loading="lazy" style="max-width:100%;border-radius:12px;margin:12px 0;"><p style="font-size:0.8rem;color:#64748b;text-align:center;">${modo === 'preciso' ? '🎯 Modo Preciso — solo formas, etiquetas abajo' : '🎨 Modo Creativo'} · ${adv}</p>${etiquetas}</div>`);
         } else {
           btn.textContent = '😕 Sin imagen disponible';
           setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 2000);

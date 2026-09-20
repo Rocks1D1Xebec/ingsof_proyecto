@@ -280,25 +280,12 @@ def api_chat():
         except Exception:
             pass
 
-    # 4. Detectar si Gemini incluyó una solicitud de ilustración visual [IMAGEN_EDUCATIVA: ...]
+    # 4. Modo solo-manual: no se genera imagen automática en el chat.
+    # Si Gemini incluyó [IMAGEN_EDUCATIVA: ...] se retira del texto; la imagen
+    # solo se genera cuando el estudiante pulsa "Ver ilustración" (/api/ilustrar),
+    # que re-analiza pregunta+respuesta con el modo Preciso/Creativo elegido.
     img_data_url = None
     patron_imagen = r"\[IMAGEN_EDUCATIVA:\s*(.*?)\]"
-    match_imagen = re.search(patron_imagen, respuesta_ia, re.IGNORECASE)
-
-    if match_imagen:
-        prompt_visual = match_imagen.group(1).strip()
-        # Generar imagen con Pollinations.ai (modo rápido: 512px, para no
-        # bloquear la respuesta del chat). Cloudflare queda en pausa.
-        try:
-            img_data_url = cf_ai.generar_imagen_pollinations(prompt_visual, rapido=True)
-        except Exception as err:
-            print("Aviso imagen auto:", err)
-            img_data_url = None
-        # Tope de tamaño: data-URLs gigantes reventaban D1/historial/RAM en Render
-        if img_data_url and len(img_data_url) > 700_000:
-            img_data_url = None
-    # La imagen viaja SIEMPRE separada (columna imagen_url + JSON); el texto
-    # queda limpio para que el historial pese KB y no cientos de KB.
     respuesta_ia = re.sub(patron_imagen, "", respuesta_ia, flags=re.IGNORECASE)
 
     # 5. Guardar la respuesta en la base de datos:
@@ -311,27 +298,62 @@ def api_chat():
         "ok": True,
         "respuesta": respuesta_ia,
         "imagen_url": img_data_url,
+        "advertencia": "Contenido generado por IA, puede contener errores. Verifica con tu libro o profe.",
     })
 
 
 @app.route("/api/ilustrar", methods=["POST"])
 def api_ilustrar():
-    """Genera bajo demanda una ilustración (botón manual 🎨) sin romper el chat si falla."""
+    """Genera bajo demanda una ilustración con re-análisis (modo Preciso/Creativo).
+
+    Espera {pregunta, respuesta, materia_nombre, modo}. Re-analiza la explicación
+    con Gemini para crear un prompt visual coherente y genera con Cloudflare AI.
+    """
     usuario_id = session.get("usuario_id")
     if not usuario_id:
         return jsonify({"ok": False, "error": "Debes iniciar sesión"}), 401
 
     data = request.get_json() or {}
-    tema = data.get("tema", "").strip()
-    texto = data.get("texto", "").strip()
-    prompt = tema or texto[:300]
-    if not prompt:
+    modo = (data.get("modo") or "preciso").lower()
+    if modo not in ("preciso", "creativo"):
+        modo = "preciso"
+    pregunta = (data.get("pregunta") or "").strip()[:500]
+    respuesta = (data.get("respuesta") or "").strip()[:4000]
+    materia_nombre = (data.get("materia_nombre") or "General").strip()
+    # Compatibilidad con el cliente antiguo: tema/texto sueltos
+    if not respuesta:
+        respuesta = (data.get("texto") or data.get("tema") or "").strip()[:4000]
+    if not pregunta:
+        pregunta = (data.get("tema") or "")[:500]
+    if not (pregunta or respuesta):
         return jsonify({"ok": False, "error": "Indica un tema para ilustrar"}), 400
 
-    img = cf_ai.generar_imagen_pollinations(prompt[:300])
+    try:
+        plan = gemini.generar_prompt_imagen(pregunta, respuesta, materia_nombre, modo)
+    except Exception as err:
+        print("Aviso re-analizador imagen:", err)
+        plan = {"prompt_en": (pregunta or respuesta[:200]), "etiquetas": [],
+                "estilo": "lineal" if modo == "preciso" else "ilustrativo"}
+
+    try:
+        img = cf_ai.generar_imagen_educativa(plan.get("prompt_en", "")[:500], modo=modo)
+    except Exception as err:
+        print("Aviso imagen manual:", err)
+        img = None
+    if img and len(img) > 700_000:
+        img = None
     if not img:
         return jsonify({"ok": False, "error": "No se pudo generar la imagen en este momento"}), 502
-    return jsonify({"ok": True, "imagen_url": img})
+    return jsonify({
+        "ok": True,
+        "imagen_url": img,
+        "modo": modo,
+        "prompt_en": plan.get("prompt_en", ""),
+        "etiquetas": plan.get("etiquetas", []),
+        "estilo": plan.get("estilo", ""),
+        "advertencia": ("Esquema aproximado generado por IA, no a escala. "
+                        "La IA puede equivocarse en imágenes y texto: verifica con tu libro o profe."),
+    })
 
 
 @app.route("/api/historial", methods=["GET"])

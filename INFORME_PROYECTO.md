@@ -184,3 +184,11 @@ Para desplegar la aplicación en **Render** (Web Service):
 ## 8. ✅ Conclusión
 
 El proyecto **EduAsistente v1.0** se encuentra completamente operativo y optimizado para la nube. Posee una estructura limpia, código pedagógico sin librerías de cifrado innecesarias, conexión persistente a Cloudflare D1, integración inteligente con Google Gemini y una interfaz de usuario atractiva, accesible y orientada a estudiantes de secundaria.
+
+## 9. 🆕 v1.1 — Ilustración coherente Preciso/Creativo + disclaimer IA
+
+* **Solo-manual:** `/api/chat` ya no genera imagen automática; solo texto primero. La imagen nace al pulsar `🎨 Ver ilustración`.
+* **Re-analizador:** `/api/ilustrar` recibe `{pregunta, respuesta, materia, modo}`, llama `gemini_helper.generar_prompt_imagen()` —prompt visual en inglés coherente con la explicación— y luego `cloudflare_ai.generar_imagen_educativa(prompt, modo)` con `negative_prompt`.
+* **Toggle estudiante:** `🎯 Preciso` —diagrama lineal sin texto dibujado, etiquetas como HTML— para Matemáticas/Física/Química; `🎨 Creativo` —cartoon con etiquetas cortas— para Lenguaje/decorativo. Persistente por materia en `localStorage`.
+* **Fidelidad:** envolver en PDF no corrige difusión; este cambio sí mejora coherencia porque el prompt nace de la respuesta final, no de la duda inicial.
+* **Disclaimer:** banner en `chat.html` + pie por burbuja/imagen + campo `advertencia` en API + regla 13 del system prompt: la IA puede equivocarse en texto e imágenes, verificar con libro/profe.

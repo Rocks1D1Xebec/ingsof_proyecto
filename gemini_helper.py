@@ -79,6 +79,8 @@ nada como quien ya sabe.
 cómo van ("¿cómo voy?", "¿cómo me fue?"). Cita EXACTAMENTE esas cifras; PROHIBIDO inventar números.
 12. FORMATO DE RESPUESTA: usa Markdown limpio: ### para títulos de pasos, **negrita** para ideas
 clave, listas con - o 1. y --- para separar secciones. PROHIBIDO usar etiquetas HTML.
+13. HONESTIDAD: la IA puede equivocarse en texto e imágenes. Cierra temas sensibles o
+numéricos con: "⚠️ Verifica con tu libro o profe, la IA puede cometer errores."
 """
 
 
@@ -326,3 +328,57 @@ Evalúa la respuesta y responde ÚNICAMENTE con un JSON válido:
             "es_correcta": False,
             "feedback": f"Error al evaluar: {str(e)}",
         }
+
+
+# ─── Re-analizador de imagen (coherencia Preciso/Creativo) ───
+def generar_prompt_imagen(pregunta: str, respuesta: str, materia: str = "",
+                          modo: str = "preciso") -> dict:
+    """Re-analiza la explicación ya dada y devuelve un prompt visual óptimo.
+
+    Retorna {"prompt_en": str, "etiquetas": [str], "estilo": "lineal|ilustrativo"}.
+    `modo=preciso`: solo formas, prohibido dibujar letras/números.
+    `modo=creativo`: se permiten 1-3 etiquetas cortas en inglés.
+    """
+    import re as _re
+    modo = (modo or "preciso").lower()
+    if modo not in ("preciso", "creativo"):
+        modo = "preciso"
+
+    # Limpiar respuesta: sin HTML, sin data-URL, sin LaTeX largo
+    texto = _re.sub(r"data:image/[^;]+;base64,[A-Za-z0-9+/=]+", "[imagen]", str(respuesta or ""))
+    texto = _re.sub(r"<[^>]+>", " ", texto)
+    texto = _re.sub(r"\$\$[\s\S]+?\$\$|\$[^$\n]+?\$", " [formula] ", texto)
+    texto = _re.sub(r"\s+", " ", texto).strip()[:2000]
+    preg = str(pregunta or "").strip()[:500]
+
+    if modo == "preciso":
+        instruccion = ("Describe ONLY the visual shapes in 1-2 English sentences. "
+                       "FLAT BLACK LINE-ART diagram, white background, thick outlines, "
+                       "minimal schematic, NO text, NO letters, NO numbers, NO words inside the image.")
+    else:
+        instruccion = ("Describe the scene in 1-2 English sentences as a clean educational "
+                       "cartoon illustration, vibrant flat colors. At most 1-3 SHORT English "
+                       "labels (single letters like O, H) if strictly needed.")
+
+    prompt = (f"Materia: {materia}. Duda: {preg}. Explicación dada: {texto}. "
+              f"{instruccion} Responde ÚNICAMENTE JSON válido: "
+              '{"prompt_en": "...", "etiquetas": ["..."], "estilo": "lineal|ilustrativo"}')
+    try:
+        bruto = _generar_con_modelos(
+            contents=prompt,
+            system_instruction="Eres un director de arte educativo. Respondes SOLO JSON válido.",
+            temperature=0.3,
+            max_tokens=250,
+        ).strip()
+        if bruto.startswith("```"):
+            bruto = bruto.split("\n", 1)[1]
+            bruto = bruto.rsplit("```", 1)[0].strip()
+        res = json.loads(bruto)
+        prompt_en = str(res.get("prompt_en", ""))[:500] or f"educational diagram about {preg[:100]}"
+        etiquetas = [str(e)[:20] for e in (res.get("etiquetas") or [])][:6]
+        estilo = str(res.get("estilo", "lineal" if modo == "preciso" else "ilustrativo"))
+        return {"prompt_en": prompt_en, "etiquetas": etiquetas, "estilo": estilo}
+    except Exception:
+        base = f"educational {'line diagram, no text' if modo == 'preciso' else 'cartoon illustration'} about {preg[:120]}"
+        return {"prompt_en": base, "etiquetas": [],
+                "estilo": "lineal" if modo == "preciso" else "ilustrativo"}

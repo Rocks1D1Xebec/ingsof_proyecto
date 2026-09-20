@@ -17,40 +17,6 @@ load_dotenv()
 ACCOUNT_ID = os.getenv("CLOUDFLARE_ACCOUNT_ID")
 API_TOKEN = os.getenv("CLOUDFLARE_API_TOKEN")
 
-# Modelo de Pollinations.ai (env `pollination_imagenes`): flux | turbo.
-# Ver modelos disponibles en https://image.pollinations.ai/models
-POLLINATION_MODEL = (
-    os.getenv("POLLINATION_IMAGENES") or os.getenv("pollination_imagenes") or "flux"
-).strip() or "flux"
-
-
-def generar_imagen_pollinations(prompt: str, rapido: bool = False) -> str | None:
-    """Genera una imagen con Pollinations.ai (gratis, sin token) y la devuelve
-    como Data URL lista para el chat. Retorna None si falla.
-
-    `rapido=True`: imagen más chica (512px) para no bloquear /api/chat.
-    """
-    modelo = (os.getenv("POLLINATION_IMAGENES")
-              or os.getenv("pollination_imagenes") or POLLINATION_MODEL).strip() or "flux"
-    lado = 512 if rapido else 1024
-    prompt_enriquecido = (
-        f"Educational illustration, clean clear diagram, cartoon style: {prompt}, "
-        f"high quality, vibrant colors"
-    )
-    url = (f"https://image.pollinations.ai/prompt/{urllib.parse.quote(prompt_enriquecido)}"
-           f"?width={lado}&height={lado}&model={urllib.parse.quote(modelo)}"
-           f"&nologo=true&seed={os.getpid() % 100000}")
-
-    try:
-        resp = requests.get(url, timeout=60)
-        if resp.status_code == 200 and len(resp.content) > 1000:
-            b64 = base64.b64encode(resp.content).decode("utf-8")
-            return f"data:image/jpeg;base64,{b64}"
-        print(f"Aviso Pollinations: HTTP {resp.status_code}: {resp.text[:200]}")
-    except Exception as err:
-        print(f"Aviso al generar imagen con Pollinations ({modelo}):", err)
-    return None
-
 # Modelos recomendados de Text-to-Image en Cloudflare
 MODELOS_IMAGEN = [
     "@cf/black-forest-labs/flux-1-schnell",
@@ -59,7 +25,8 @@ MODELOS_IMAGEN = [
 ]
 
 
-def generar_imagen_educativa(prompt: str, rapido: bool = False) -> str | None:
+def generar_imagen_educativa(prompt: str, rapido: bool = False,
+                           modo: str = "preciso") -> str | None:
     """
     Genera una imagen con Cloudflare Workers AI y la devuelve como un string Data URL
     listo para incrustar directamente en HTML (data:image/png;base64,...).
@@ -67,6 +34,8 @@ def generar_imagen_educativa(prompt: str, rapido: bool = False) -> str | None:
 
     `rapido=True`: intenta solo el modelo más veloz (para no bloquear /api/chat).
     `rapido=False`: prueba los 3 modelos (botón manual, el usuario ya espera).
+    `modo="preciso"`: diagrama lineal sin texto dibujado (recomendado ciencias).
+    `modo="creativo"`: ilustración cartoon donde se permite texto corto.
     Timeouts cortos: Render mata el worker a los ~30s; 25s x 3 = muerte segura.
     """
     account_id = os.getenv("CLOUDFLARE_ACCOUNT_ID") or ACCOUNT_ID
@@ -77,7 +46,20 @@ def generar_imagen_educativa(prompt: str, rapido: bool = False) -> str | None:
         return None
 
     # Enriquecer el prompt para estilo didáctico y educativo
-    prompt_enriquecido = f"Educational illustration, clean, clear diagram or cartoon style: {prompt}, high quality, vibrant colors"
+    modo = (modo or "preciso").lower()
+    if modo not in ("preciso", "creativo"):
+        modo = "preciso"
+    if modo == "preciso":
+        prompt_enriquecido = (
+            "Flat black line-art educational diagram, white background, thick outlines, "
+            f"minimal schematic, no text, no letters, no numbers, no words: {prompt}"
+        )
+        negative = "photo, 3d render, blurry, text, letters, numbers, words, watermark, shadow, gradient"
+    else:
+        prompt_enriquecido = (
+            f"Clean educational cartoon illustration, vibrant flat colors: {prompt}, high quality"
+        )
+        negative = "blurry, horror, watermark, distorted, ugly"
 
     modelos = MODELOS_IMAGEN[:1] if rapido else MODELOS_IMAGEN
     for modelo in modelos:
@@ -86,7 +68,7 @@ def generar_imagen_educativa(prompt: str, rapido: bool = False) -> str | None:
             "Authorization": f"Bearer {api_token}",
             "Content-Type": "application/json",
         }
-        body = {"prompt": prompt_enriquecido}
+        body = {"prompt": prompt_enriquecido, "negative_prompt": negative}
 
         try:
             resp = requests.post(url, headers=headers, json=body, timeout=12)
