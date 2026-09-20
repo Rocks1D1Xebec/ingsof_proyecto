@@ -18,43 +18,34 @@ Este documento resume el análisis de la carpeta `Proyecto/` frente al estado ac
 | **RF-04 / HU-04 / CU-04** | Selección de Materias | ✅ **Completo** | 4 materias (Matemáticas, Física, Química, Lenguaje) en `dashboard.html`. |
 | **RF-05 / HU-05 / CU-05** | Enviar preguntas | ✅ **Completo** | Caja de texto adaptada a móvil en `chat.html`. |
 | **RF-06 / RF-07 / HU-06** | Explicación didáctica paso a paso | ✅ **Completo** | 4 pasos guiados con Gemini y diagramas educativos con Cloudflare Workers AI. |
-| **RF-08 / HU-07 / CU-07** | Generar ejercicio de práctica | 🟡 **Parcial** | Falta botón contextual al final de cada explicación de la IA. |
-| **RF-09 / RF-10 / HU-08 / HU-09**| Revisar ejercicio y señalar errores | 🟡 **Parcial** | Funciona la revisión, pero **no se almacena** en la tabla `respuestas_ejercicios`. |
-| **RF-11 / RF-12 / RF-13** | Nivel individual, técnica por asociación y progreso | ⚪ **Pendiente** | Catalogado en el documento como **Versión 2.0 (Backlog futuro)**. |
+| **RF-08 / HU-07 / CU-07** | Generar ejercicio de práctica | ✅ **Completo** | Botón contextual `🎯 Practicar este tema` al final de cada burbuja (`chat.html`) + botón general + `POST /api/ejercicio` con tema contextual. |
+| **RF-09 / RF-10 / HU-08 / HU-09**| Revisar ejercicio y señalar errores | ✅ **Completo** | Revisión con Gemini y **persistencia** en `respuestas_ejercicios` vía `guardar_respuesta_ejercicio()` invocada en `POST /api/revisar` (`main.py`) + contadores RF-13. |
+| **RF-11 / RF-12 / RF-13** | Nivel individual, técnica por asociación y progreso | ✅ **Completo** | RF-11: nivel por materia recalculado por IA cada 20 mensajes (`evaluar_nivel()` + `nivel_usuario`). RF-12: perfil en `dashboard.html` + `GET/PUT /api/perfil` (`perfiles_aprendizaje`). RF-13: `intentos/aciertos` + la IA informa progreso real ante "¿cómo voy?". |
 
 ---
 
-## 🔍 2. Puntos Exactos que Faltan para Cumplir al 100% el MVP (Versión 1.0)
+## 🔍 2. Puntos MVP (Versión 1.0) — Verificados como COMPLETADOS
 
-### 1. Guardar las revisiones de ejercicios en la Base de Datos
+### 1. Guardar las revisiones de ejercicios en la Base de Datos ✅ HECHO
 - **Documento:** `historias_usuario.md` (HU-08 y HU-09) y `basedatos.sql`.
-- **Situación actual:** La tabla `respuestas_ejercicios` ya está creada en la base de datos, pero en `main.py` la ruta `/api/revisar` no guarda la respuesta enviada por el estudiante, si fue correcta ni el feedback recibido.
-- **Acción requerida:**
-  - Crear la función `guardar_respuesta_ejercicio(...)` en `cloudflare_d1.py`.
-  - Invocarla en la ruta `/api/revisar` de `main.py`.
+- **Estado actual:** La tabla `respuestas_ejercicios` está creada y `main.py` (`POST /api/revisar`) **sí guarda** la respuesta, `es_correcta` y `feedback` vía `guardar_respuesta_ejercicio(...)` en `cloudflare_d1.py`, además de sumar `intentos/aciertos` en `nivel_usuario` (RF-13).
 
 ---
 
-### 2. Botón "Practicar un ejercicio sobre este tema" al final de la explicación
+### 2. Botón "Practicar un ejercicio sobre este tema" al final de la explicación ✅ HECHO
 - **Documento:** `historias_usuario.md` (HU-06: Criterios de Aceptación) y `informe_requerimientos_asistente_escolar.md` (CU-06: Paso 4).
   > *"Al final de la explicación aparece el botón 'Practicar un ejercicio sobre este tema'."*
-- **Situación actual:** Actualmente solo existe un botón genérico en la barra de acciones rápidas (`btn-practice`), el cual no toma como contexto el tema específico que la IA acaba de responder.
-- **Acción requerida:**
-  - Agregar al final de cada burbuja de respuesta del asistente un botón directo: `[🎯 Practicar un ejercicio sobre este tema]`.
-  - Al presionarlo, solicitar a `/api/ejercicio` un problema basado en el tema recién explicado.
+- **Estado actual:** Cada burbuja del asistente en `chat.html` (`agregarMensajeAsistente`) incluye `[🎯 Practicar este tema]`, que llama a `practicarTema()` → `POST /api/ejercicio` con el tema recién explicado como contexto. Además se mantiene el botón general `btn-practice` para ejercicio representativo (HU-07).
 
 ---
 
-### 3. Cargar imágenes guardadas en el Historial del Chat
+### 3. Cargar imágenes guardadas en el Historial del Chat ✅ HECHO
 - **Documento:** Requerimiento de persistencia y continuidad de la sesión.
-- **Situación actual:** Se añadió la columna `imagen_url` en la tabla `respuestas`, pero la función `cargarHistorial()` de `chat.html` solo inyecta el texto plano de las respuestas antiguas.
-- **Acción requerida:**
-  - Si la fila del historial contiene `imagen_url` o etiquetas HTML, renderizarlas correctamente en la vista móvil al reabrir el chat.
+- **Estado actual:** La columna `imagen_url` existe en `respuestas`, `obtener_historial()` la devuelve y `cargarHistorial()` en `chat.html` la renderiza (`agregarMensajeAsistente(respuesta, imagen_url)`). Modo solo-manual v1.1: la imagen se genera bajo demanda con `/api/ilustrar` (Preciso/Creativo) o esquema de texto con `/api/esquema`.
 
 ---
 
-## 🚀 3. Requerimientos Planificados para la Versión 2.0 (Fase Posterior)
-Según el documento `informe_requerimientos_asistente_escolar.md`, estos puntos no bloquean la entrega actual (MVP v1.0), pero forman parte de la siguiente etapa:
-1. **RF-11:** Adaptación de explicaciones y ejercicios según el nivel (básico, intermedio, avanzado) del estudiante.
-2. **RF-12:** Adaptación de explicaciones según temas de interés del estudiante (ej: analogías con videojuegos, fútbol, música).
-3. **RF-13:** Panel de seguimiento de progreso del estudiante (porcentaje de ejercicios correctos y temas dominados).
+## 🚀 3. Requerimientos v2.0 — ADELANTADOS E IMPLEMENTADOS
+1. **RF-11:** ✅ Nivel por materia (`nivel_usuario.nivel` + `prompt_nivel`), recalculado por la IA cada 20 mensajes.
+2. **RF-12:** ✅ Perfil de aprendizaje (`perfiles_aprendizaje.estilo`), editable en `dashboard.html` → `GET/PUT /api/perfil`, usado en prompts como analogías.
+3. **RF-13:** ✅ Progreso (`intentos/aciertos` por materia); la IA cita cifras reales ante "¿cómo voy?".

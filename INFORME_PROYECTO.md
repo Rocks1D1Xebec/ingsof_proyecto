@@ -39,9 +39,13 @@ El desarrollo implementa el 100% de los requisitos definidos en los documentos d
 | :--- | :--- | :--- |
 | **Backend** | `Python 3` + `Flask` | Micro-framework ligero que permite estructurar rutas API claras y servir los archivos web sin configuraciones complejas. |
 | **Servidor en la Nube** | `Gunicorn` | Servidor de producción WSGI utilizado por **Render** para desplegar aplicaciones Python de forma eficiente. |
-| **Base de Datos** | `Cloudflare D1` (SQLite Serverless) | Base de datos relacional ligera en la nube que persiste usuarios, materias, preguntas, respuestas y ejercicios. |
+| **Base de Datos** | `Cloudflare D1` (SQLite Serverless) | Base de datos relacional en la nube que persiste usuarios, materias, mensajes, respuestas, ejercicios, niveles y perfiles. Acceso vía API REST desde `cloudflare_d1.py`. |
+| **Imágenes educativas** | `Cloudflare Workers AI` | Generación bajo demanda de ilustraciones (`/api/ilustrar`, modo Preciso/Creativo) y esquemas de texto (`/api/esquema`) desde `cloudflare_ai.py`. |
+| **Hosting / Despliegue** | `Render` (Web Service + `Gunicorn`) | Ejecución en producción con `gunicorn main:app --bind 0.0.0.0:$PORT`. Variables en el dashboard de Render. |
 | **Conector HTTP** | `Requests` | Librería estándar de Python para realizar peticiones HTTP seguras hacia la API REST de Cloudflare D1. |
 | **Inteligencia Artificial** | `Google GenAI SDK` (`google-genai`) | SDK oficial para conectar con los modelos de **Google Gemini** y generar explicaciones pedagógicas adaptadas al nivel escolar. |
+| **Seguridad** | `Werkzeug` (`werkzeug.security`) | Hash con sal de contraseñas (`generate/check_password_hash`). Viene como dependencia de Flask (RNF-05). |
+| **Renderizado matemático** | `KaTeX 0.16.11` (CDN) | Renderiza fórmulas LaTeX `$...$` / `$$...$$` en `chat.html` (CSS + `katex.min.js` + `auto-render`). |
 | **Variables de Entorno** | `Python-Dotenv` | Permite cargar configuraciones y llaves secretas desde el archivo `.env` o desde el panel de Render. |
 | **Frontend** | `HTML5`, `CSS3` y `JavaScript Vanilla` | Interfaz limpia, responsiva, moderna y sin dependencias pesadas (React, Vue, etc.), facilitando su mantenimiento y velocidad de carga. |
 
@@ -54,11 +58,12 @@ ingsof_proyecto/
 │
 ├── .env                      # Variables de entorno (credenciales de Cloudflare y Gemini)
 ├── requirements.txt          # Dependencias de Python para Render
-├── schema.sql                # Esquema SQL con las tablas de la base de datos
+├── basedatos.sql             # Esquema SQL (8 tablas) para Cloudflare D1
 ├── init_db.py                # Script manual de inicialización de tablas y datos
 │
 ├── main.py                   # Servidor web principal Flask y endpoints de la API
 ├── cloudflare_d1.py          # Módulo de conexión y consultas a Cloudflare D1
+├── cloudflare_ai.py          # Generador de imágenes educativas (Workers AI) + esquemas
 ├── gemini_helper.py          # Integración con Google Gemini (explicaciones y ejercicios)
 ├── listar_modelos.py         # Script para listar los modelos autorizados de Gemini
 │
@@ -81,9 +86,9 @@ ingsof_proyecto/
 
 ### A. Backend Principal (`main.py`)
 El archivo `main.py` es el núcleo del backend. Administra las rutas del servidor y las peticiones enviadas desde el navegador:
-- **Autenticación Directa y Simple**:
-  - `POST /api/register`: Recibe nombre, correo y contraseña. Si el correo no existe, crea el registro y asigna sesión activa.
-  - `POST /api/login`: Compara el correo y la contraseña en texto plano de forma directa (`usuario['contrasena'] == contrasena`), permitiendo entender el flujo de login sin funciones criptográficas complejas.
+- **Autenticación Segura con Hash (RNF-05)**:
+  - `POST /api/register`: Recibe nombre, correo y contraseña. Si el correo no existe, crea el registro con `generate_password_hash` (werkzeug con sal) y asigna sesión activa.
+  - `POST /api/login`: Busca por correo y verifica con `check_password_hash`. Incluye migración automática de cuentas antiguas en texto plano al hash.
   - `GET /api/sesion`: Retorna si el visitante está autenticado y su nombre para mostrarlo en el menú superior.
   - `POST /api/logout`: Limpia las cookies de sesión y desconecta al usuario.
 - **Gestión de Materias**:
@@ -101,7 +106,7 @@ El archivo `main.py` es el núcleo del backend. Administra las rutas del servido
 ### B. Base de Datos en la Nube (`cloudflare_d1.py`)
 Conecta la aplicación con la base de datos Cloudflare D1 mediante peticiones HTTP a su API REST:
 - **Auto-inicialización Segura (`asegurar_inicializacion()`)**:
-  Al encender el servidor en Render, este método verifica y crea automáticamente las 6 tablas esenciales (`usuarios`, `materias`, `mensajes`, `respuestas`, `ejercicios`, `respuestas_ejercicios`) y puebla las 4 materias iniciales (Matemáticas, Física, Química, Lenguaje) y un usuario inicial por defecto.
+  Al encender el servidor en Render, este método verifica y crea automáticamente las 8 tablas (`usuarios`, `materias`, `perfiles_aprendizaje`, `nivel_usuario`, `mensajes`, `respuestas`, `ejercicios`, `respuestas_ejercicios`) y puebla las 4 materias base globales (Matemáticas, Física, Química, Lenguaje). Ver esquema completo en `basedatos.sql`.
 - **Tolerancia a Fallos**:
   Si la base de datos tarda en responder o hay un retraso de conexión, las funciones de chat capturan la excepción sin interrumpir el flujo, garantizando que el estudiante siempre reciba la respuesta de la IA.
 
@@ -167,12 +172,13 @@ Para desplegar la aplicación en **Render** (Web Service):
      gunicorn main:app --bind 0.0.0.0:$PORT
      ```
 
-2. **Variables de Entorno en el Dashboard de Render**:
-   - `CLOUDFLARE_ACCOUNT_ID`: ID de tu cuenta de Cloudflare.
-   - `CLOUDFLARE_DATABASE_ID`: ID de la base de datos D1 en Cloudflare.
-   - `CLOUDFLARE_API_TOKEN`: Token con permisos de lectura/escritura en D1.
-   - `API`: Tu clave de API de Google Gemini (`AIzaSy...`).
-   - `SECRET_KEY`: Cadena para la seguridad de las sesiones web.
+2. **Variables de Entorno en el Dashboard de Render** (nombres exactos):
+   - `API`: Clave de Google Gemini (`AIzaSy...`).
+   - `CLOUDFLARE_ACCOUNT_ID`: ID de la cuenta de Cloudflare.
+   - `CLOUDFLARE_DATABASE_ID`: ID de la base D1.
+   - `CLOUDFLARE_API_TOKEN`: Token con permisos D1 (lectura/escritura).
+   - `CLOUDFLARE_API_TOKEN_IMAGEN`: Token para Workers AI (si no se define, se reutiliza `CLOUDFLARE_API_TOKEN`).
+   - `SECRET_KEY`: (opcional, recomendado) Firma de sesiones Flask. Si no se define, se usa valor por defecto.
 
 3. **Verificación de Modelos**:
    Una vez desplegado, puedes abrir en tu navegador:
@@ -183,7 +189,7 @@ Para desplegar la aplicación en **Render** (Web Service):
 
 ## 8. ✅ Conclusión
 
-El proyecto **EduAsistente v1.0** se encuentra completamente operativo y optimizado para la nube. Posee una estructura limpia, código pedagógico sin librerías de cifrado innecesarias, conexión persistente a Cloudflare D1, integración inteligente con Google Gemini y una interfaz de usuario atractiva, accesible y orientada a estudiantes de secundaria.
+El proyecto **EduAsistente v1.0** se encuentra completamente operativo y optimizado para la nube. Posee una estructura limpia, contraseñas protegidas con hash `werkzeug` con sal (RNF-05), conexión persistente a Cloudflare D1, integración inteligente con Google Gemini y una interfaz de usuario atractiva, accesible y orientada a estudiantes de secundaria.
 
 ## 9. 🆕 v1.1 — Ilustración coherente Preciso/Creativo + disclaimer IA
 
