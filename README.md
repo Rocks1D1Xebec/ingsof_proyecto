@@ -1,192 +1,274 @@
-# 📘 INFORME DEL PROYECTO: ASISTENTE ESCOLAR (EduAsistente v1.0)
+# 🎓 GUION DE ESTUDIO Y DEFENSA DEL PROYECTO: "EduAsistente"
+### Documento Oficial de Preparación para la Defensa de Grado / Evaluación Académica
+**Proyecto:** Asistente Web Móvil de Tutoría Académica Escolar ("EduAsistente")  
+**Carrera:** Ingeniería de Sistemas — Universidad de Los Andes (UNANDES)  
+**Materia:** Ingeniería de Software  
+**Docente / Tutor:** Ing. Cortes Montes Alejandro Marco  
+**Autores:** Apaza Chavez Alejandro Nyls & Poma Jurado Cruz Cohen  
+**Documento base de referencia:** *Informe Final de Ingeniería de Software (`Informe IS EA.docx.pdf`)*  
 
 ---
 
-## 1. 🎯 Resumen Ejecutivo del Proyecto
-
-El **Asistente Escolar (EduAsistente)** es una plataforma web interactiva diseñada para apoyar a estudiantes de secundaria que presentan dificultades académicas en materias fundamentales: **Matemáticas, Física, Química y Lenguaje**. Su propósito es funcionar como un tutor virtual paciente, amigable y motivador, capaz de explicar conceptos paso a paso, responder dudas sin tecnicismos innecesarios y ofrecer ejercicios de práctica con retroalimentación inmediata.
-
-El proyecto fue desarrollado bajo una filosofía de **código simple, funcional, robusto y fácil de entender a nivel educativo**. Las contraseñas se guardan con hash `werkzeug` (con sal, estándar de la industria) y la documentación de análisis vive en `Proyecto/`.
+> 💡 **¿Cómo usar este guion de estudio?**  
+> Este documento traduce todo el contenido formal de tu informe técnico de 52 páginas a un **lenguaje oral, fluido, directo y fácil de explicar**.  
+> Siempre que debas mencionar un término técnico o palabra formal de Ingeniería de Software (ej. *Scrum, MoSCoW, Caja Negra, IEEE 830, Hash con Sal, Andamiaje Socrático, KaTeX, Stateless*), encontrarás una **caja explicativa inmediata** para que sepas qué significa y cómo defenderlo ante las preguntas del docente o jurado.
 
 ---
 
-## 2. 📋 Cumplimiento de Requerimientos y Casos de Uso
+## 🧭 MAPA RÁPIDO PARA TU APERTURA (Los primeros 2 a 3 minutos)
 
-El desarrollo implementa el 100% de los requisitos definidos en los documentos de análisis:
-
-| Requisito / Caso de Uso | Descripción | Estado | Implementación |
-| :--- | :--- | :---: | :--- |
-| **RF-01 / CU-01** | **Registro de Usuario**: Creación de cuenta con nombre, correo y contraseña. | ✅ Completado | Formulario en `register.html` conectado a `POST /api/register`. |
-| **RF-02 / CU-01** | **Inicio de Sesión**: Validación de credenciales del estudiante. | ✅ Completado | Formulario en `login.html` conectado a `POST /api/login`. |
-| **RF-03** | **Cierre de Sesión**: Finalizar la sesión activa del usuario. | ✅ Completado | Botón de salida conectado a `POST /api/logout`. |
-| **RF-04 / CU-02** | **Gestión de Materias**: Listar asignaturas y crear nuevas materias personalizadas. | ✅ Completado | Panel dinámico en `dashboard.html` conectado a `GET` y `POST /api/materias`. |
-| **RF-05 / CU-03** | **Formulación de Preguntas**: El estudiante envía su duda en texto plano. | ✅ Completado | Caja de chat en `chat.html` conectada a `POST /api/chat`. |
-| **RF-06 / CU-03** | **Explicación Paso a Paso**: La IA responde de forma didáctica y estructurada. | ✅ Completado | Prompts pedagógicos con Google Gemini en `gemini_helper.py`. |
-| **RF-07 / CU-03** | **Historial de Conversación**: Guardar y consultar mensajes anteriores. | ✅ Completado | Consultas SQLite en Cloudflare D1 mediante `GET /api/historial`. |
-| **RF-08 / CU-04** | **Generación de Ejercicios**: Crear problemas de práctica adaptados a la materia. | ✅ Completado | Botón interactivo en el chat conectado a `POST /api/ejercicio`. |
-| **RF-09 / CU-04** | **Revisión de Respuestas**: Evaluar si la respuesta del estudiante es correcta o no. | ✅ Completado | Módulo interactivo conectado a `POST /api/revisar`, con persistencia en `respuestas_ejercicios`. |
-| **RF-10 / CU-04** | **Retroalimentación Formativa**: Mostrar con empatía en qué paso se equivocó. | ✅ Completado | Evaluación guiada por Gemini con consejos constructivos. |
-| **RF-11** | **Adaptación al nivel**: Nivel por materia deducido por la IA cada 20 mensajes (`nivel_usuario`). | ✅ Completado | `evaluar_nivel()` en `gemini_helper.py` + contexto en `/api/chat`. |
-| **RF-12** | **Técnica por asociación**: El estudiante describe cómo aprende y la IA adapta analogías. | ✅ Completado | Tarjeta en `dashboard.html` + `GET/PUT /api/perfil` (tabla `perfiles_aprendizaje`). |
-| **RF-13** | **Guardar progreso**: Intentos/aciertos por materia + la IA informa con datos reales al preguntar "¿cómo voy?". | ✅ Completado | Contadores en `nivel_usuario` + `respuestas_ejercicios`. |
-| **RNF-05** | **Protección**: Contraseñas con hash y sal. | ✅ Completado | `werkzeug.security` en `POST /api/register` y `/api/login`. |
+> 🗣️ **Discurso recomendado de apertura:**  
+> *"Buenos días docente y miembros del jurado. Hoy presentamos **EduAsistente**, un Asistente Web Móvil de Tutoría Académica Escolar diseñado bajo los estándares de la Ingeniería de Software para resolver un problema humano real.*  
+> *Diagnosticamos el caso de la señora **Yola Chávez Espinoza**, madre de familia cuyos hijos en educación secundaria presentan dificultades en Ciencias Exactas (**Matemáticas, Física, Química**) y **Lenguaje**. En su hogar enfrentan una restricción técnica crítica: **no cuentan con computadora de escritorio ni laptop**, su único medio digital es el **teléfono celular** y no tienen apoyo pedagógico en casa.*  
+> *Para dar solución, desarrollamos una plataforma web móvil inteligente, ligera y accesible 24/7 que aplica **tutoría socrática en 4 pasos**, ejercicios de práctica contextualizados, adaptación según el estilo de aprendizaje del estudiante ('aprender por asociación'), renderizado de fórmulas con **KaTeX** y diagramas conceptuales con **Cloudflare Workers AI**, todo respaldado por una base de datos serverless en **Cloudflare D1** y un backend en **Python con Flask** desplegado en **Render**."*
 
 ---
 
-## 3. 🛠️ Tecnologías y Librerías Utilizadas
+## 📚 ÍNDICE GENERAL DEL GUION
 
-| Componente | Tecnología / Librería | Justificación y Uso |
+1. [El Problema Real, Pregunta de Investigación y Justificación](#1-el-problema-real-pregunta-de-investigación-y-justificación)
+2. [Objetivos del Proyecto (General y Específicos por Fases)](#2-objetivos-del-proyecto-general-y-específicos-por-fases)
+3. [Marco Metodológico: IEEE 830, Scrum, MoSCoW y UML](#3-marco-metodológico-ieee-830-scrum-moscow-y-uml)
+4. [Librerías y Tecnologías: Justificación Técnica ("¿Por qué usamos esto?")](#4-librerías-y-tecnologías-justificación-técnica-por-qué-usamos-esto)
+5. [Desarrollo por Sprints (1, 2 y 3) y Pruebas de Caja Negra](#5-desarrollo-por-sprints-1-2-y-3-y-pruebas-de-caja-negra)
+6. [La Base de Datos: Modelo Entidad-Relación (8 Tablas en Cloudflare D1)](#6-la-base-de-datos-modelo-entidad-relación-8-tablas-en-cloudflare-d1)
+7. [Inteligencia Artificial: Andamiaje Socrático, KaTeX y Workers AI](#7-inteligencia-artificial-andamiaje-socrático-katex-y-workers-ai)
+8. [Seguridad, Ética y Disclaimer Educativo](#8-seguridad-ética-y-disclaimer-educativo)
+9. [Catálogo de Endpoints de la API REST](#9-catálogo-de-endpoints-de-la-api-rest)
+10. [Banco de Preguntas Típicas del Jurado y Respuestas Maestras](#10-banco-de-preguntas-típicas-del-jurado-y-respuestas-maestras)
+
+---
+
+## 1. EL PROBLEMA REAL, PREGUNTA DE INVESTIGACIÓN Y JUSTIFICACIÓN
+
+### 1.1 El Diagnóstico del Problema (Árbol de Causas y Efectos)
+- **Cliente:** Sra. Yola Chávez Espinoza.
+- **Causas Raíz:**
+  1. *Ritmo pedagógico rígido en el aula:* El profesor en el colegio avanza al ritmo del promedio y no cubre los tiempos individuales de los estudiantes.
+  2. *Carencia de apoyo en el hogar:* La madre desconoce los contenidos curriculares de secundaria y no tiene recursos para clases particulares.
+  3. *Brecha de dispositivos:* **No hay PC ni laptop.** Solo celulares inteligentes.
+  4. *Hábitos de estudio truncados:* Los jóvenes leen por 2 horas, pero cuando surge una duda se bloquean y "no hacen nada" por falta de respuesta inmediata.
+- **Efectos:** Frustración, rezago en calificaciones, desmotivación escolar y dependencia académica.
+
+### 1.2 La Pregunta de Investigación Formal
+> *"¿De qué manera el desarrollo de un asistente web móvil basado en inteligencia artificial y andamiaje pedagógico estructurado permite mejorar la comprensión conceptual y el aprendizaje autónomo en materias de ciencias exactas y lenguaje en estudiantes de secundaria que solo disponen de teléfonos inteligentes?"*
+
+### 1.3 Las 3 Justificaciones del Proyecto
+- **Justificación Técnica:** Demuestra cómo integrar microframeworks web modernos (`Flask`), bases de datos distribuidas en el borde (`Cloudflare D1`), modelos fundacionales de IA (`Google Gemini`) y herramientas tipográficas (`KaTeX`) en una arquitectura cliente-servidor optimizada para teléfonos celulares de gama media y baja.
+- **Justificación Social:** Democratiza el acceso a tutoría de alta calidad para familias de escasos recursos o sin computadoras, cerrando la brecha educativa.
+- **Justificación Económica:** Costo de desarrollo e infraestructura prácticamente nulo ($0 USD gracias al aprovechamiento eficiente de capas gratuitas en Cloudflare, Google AI Studio y Render).
+
+> 💡 **Término Clave: Andamiaje Pedagógico (Scaffolding)**  
+> **¿Qué significa?** Es una teoría educativa (creada por psicólogos como Vygotsky y Bruner) donde el tutor le da apoyos temporales al alumno y los va retirando a medida que el alumno aprende a resolver los problemas por sí mismo.  
+> **¿Cómo aplica en el proyecto?** EduAsistente no le da el resultado masticado al alumno; le explica el concepto con una analogía, le muestra las reglas, lo guía paso a paso y luego le pide resolver un ejercicio para comprobar si entendió.
+
+---
+
+## 2. OBJETIVOS DEL PROYECTO (GENERAL Y ESPECÍFICOS)
+
+### Objetivo General
+Desarrollar un asistente web móvil de tutoría académica escolar accesible desde teléfonos inteligentes, que proporcione explicaciones guiadas paso a paso, ejercicios contextualizados, adaptación al estilo de aprendizaje y retroalimentación formativa de errores en Matemáticas, Física, Química y Lenguaje, con el fin de fortalecer el aprendizaje autónomo en estudiantes de secundaria.
+
+### Objetivos Específicos (Mapeados a las 4 Fases de la Ingeniería de Software):
+1. **Fase de Análisis:** Analizar y formalizar los requerimientos aplicando el estándar **IEEE 830** y la técnica de priorización **MoSCoW** para delimitar el alcance del MVP bajo entorno móvil estricto.
+2. **Fase de Diseño:** Diseñar la arquitectura del software mediante diagramas **UML** (casos de uso, secuencia, comunicación), historias de usuario (plantilla Connextra) y el modelo entidad-relación normalizado de **8 tablas** en Cloudflare D1.
+3. **Fase de Implementación:** Construir los módulos funcionales integrando **Flask, Gunicorn, Google Gemini SDK**, adaptación de analogías ("aprender por asociación"), soporte visual con **Cloudflare Workers AI** y notación **KaTeX**.
+4. **Fase de Pruebas:** Validar la calidad, seguridad y usabilidad del sistema mediante **pruebas de caja negra** en cada Sprint de desarrollo.
+
+---
+
+## 3. MARCO METODOLÓGICO: IEEE 830, SCRUM, MOSCOW Y UML
+
+Si el jurado pregunta por el proceso formal de ingeniería de software:
+
+### 3.1 Estándar IEEE 830 (Especificación de Requerimientos de Software - SRS)
+- **¿Qué es?** Es una norma internacional del Instituto de Ingenieros Eléctricos y Electrónicos (IEEE) que establece cómo redactar requerimientos de software para que sean correctos, claros, consistentes, verificables y rastreables.
+- **¿Cómo se usó?** Se redactó el catálogo de Requerimientos Funcionales (**RF-01** al **RF-13**) y Requerimientos No Funcionales (**RNF-01** al **RNF-05**).
+
+### 3.2 Priorización MoSCoW
+- **M (Must have - Indispensables / MVP):** Registro, inicio de sesión, materias, envío de preguntas, explicación paso a paso, generación y corrección de ejercicios en celular.
+- **S (Should have - Importantes):** Historial persistente, apoyo visual con imágenes/esquemas.
+- **C (Could have - Deseables):** Adaptación automática al nivel del alumno cada 20 mensajes y perfil de gustos para analogías. *(¡En nuestro proyecto logramos implementarlos todos!)*.
+- **W (Won't have this time - Para futuras versiones):** Tutoría por voz o reconocimiento de escritura a mano en fotos de cuaderno.
+
+> 💡 **Término Clave: Metodología Ágil y Marco Scrum**  
+> **¿Qué significa?** Es una forma de construir software en pequeños bloques de tiempo llamados **Sprints** (de 1 a 2 semanas cada uno), entregando en cada ciclo una parte del sistema completamente terminada y probada.  
+> **¿Cómo aplica en el proyecto?** Dividimos el desarrollo en **3 Sprints**:  
+> - **Sprint 1:** Acceso, seguridad y materias.  
+> - **Sprint 2:** Motor de tutoría con IA, historial y personalización.  
+> - **Sprint 3:** Práctica interactiva, evaluación y retroalimentación formativa.
+
+### 3.3 Historias de Usuario (Plantilla Connextra)
+Todas las historias del Product Backlog siguen el formato formal:  
+> *"**Como** [rol de usuario], **quiero** [funcionalidad] **para** [beneficio o valor de negocio]."*
+
+---
+
+## 4. LIBRERÍAS Y TECNOLOGÍAS: JUSTIFICACIÓN TÉCNICA
+
+Aquí tienes la respuesta exacta ante la típica pregunta: **"¿Por qué elegiste esta tecnología y no otra?"**:
+
+| Tecnología / Librería | ¿Qué es en palabras simples? | ¿Por qué se eligió? (Justificación Técnica) |
 | :--- | :--- | :--- |
-| **Backend** | `Python 3` + `Flask` | Micro-framework ligero que permite estructurar rutas API claras y servir los archivos web sin configuraciones complejas. |
-| **Servidor en la Nube** | `Gunicorn` | Servidor de producción WSGI utilizado por **Render** para desplegar aplicaciones Python de forma eficiente. |
-| **Base de Datos** | `Cloudflare D1` (SQLite Serverless) | Base de datos relacional en la nube que persiste usuarios, materias, mensajes, respuestas, ejercicios, niveles y perfiles. Acceso vía API REST desde `cloudflare_d1.py`. |
-| **Imágenes educativas** | `Cloudflare Workers AI` | Generación bajo demanda de ilustraciones (`/api/ilustrar`, modo Preciso/Creativo) y esquemas de texto (`/api/esquema`) desde `cloudflare_ai.py`. |
-| **Hosting / Despliegue** | `Render` (Web Service + `Gunicorn`) | Ejecución en producción con `gunicorn main:app --bind 0.0.0.0:$PORT`. Variables en el dashboard de Render. |
-| **Conector HTTP** | `Requests` | Librería estándar de Python para realizar peticiones HTTP seguras hacia la API REST de Cloudflare D1. |
-| **Inteligencia Artificial** | `Google GenAI SDK` (`google-genai`) | SDK oficial para conectar con los modelos de **Google Gemini** y generar explicaciones pedagógicas adaptadas al nivel escolar. |
-| **Seguridad** | `Werkzeug` (`werkzeug.security`) | Hash con sal de contraseñas (`generate/check_password_hash`). Viene como dependencia de Flask (RNF-05). |
-| **Renderizado matemático** | `KaTeX 0.16.11` (CDN) | Renderiza fórmulas LaTeX `$...$` / `$$...$$` en `chat.html` (CSS + `katex.min.js` + `auto-render`). |
-| **Variables de Entorno** | `Python-Dotenv` | Permite cargar configuraciones y llaves secretas desde el archivo `.env` o desde el panel de Render. |
-| **Frontend** | `HTML5`, `CSS3` y `JavaScript Vanilla` | Interfaz limpia, responsiva, moderna y sin dependencias pesadas (React, Vue, etc.), facilitando su mantenimiento y velocidad de carga. |
+| **Python 3** | Lenguaje de programación base. | Sintaxis limpia, altamente legible y soporte nativo indiscutible para las principales APIs de Inteligencia Artificial. |
+| **Flask** | Microframework web para el backend. | A diferencia de *Django* (que es pesado y tiene miles de archivos innecesarios), Flask es minimalista, rápido, no impone estructuras rígidas y permite crear endpoints API en pocas líneas. |
+| **Gunicorn** | Servidor web WSGI de producción. | El servidor interno de Flask es solo para pruebas locales. Gunicorn administra múltiples procesos de trabajo (*workers*) en Linux (Render) para soportar múltiples conexiones simultáneas sin congelarse. |
+| **Google GenAI SDK (`google-genai`)** | Librería cliente de Google Gemini. | Es la versión oficial más moderna de Google. Permite inspeccionar qué modelos están activos dinámicamente (`client.models.list()`) e interactuar con Gemini 2.5 Flash y 1.5 Flash con latencia ultra baja. |
+| **Cloudflare D1** | Base de datos SQLite Serverless en la nube. | En servicios como Render, el disco duro es efímero (se borra al reiniciar). Cloudflare D1 almacena la base de datos en la nube con réplicas globales, costo cero y consultas SQL relacionales clásicas. |
+| **Requests** | Conector HTTP para Python. | Permite enviar consultas SQL en formato JSON mediante llamadas HTTP seguras (`requests.post`) hacia la API de Cloudflare sin depender de controladores pesados de base de datos. |
+| **Cloudflare Workers AI** | Motor de inferencia de IA en la nube. | Genera ilustraciones educativas bajo demanda (`@cf/black-forest-labs/flux-1-schnell` o *Stable Diffusion*) para ayudar a estudiantes visuales en temas abstractos (células, átomos, vectores). |
+| **Werkzeug (`werkzeug.security`)** | Módulo de seguridad criptográfica. | Cumple el requerimiento **RNF-05**. Aplica algoritmos de hashing con sal (`pbkdf2:sha256` o `scrypt`) para que ninguna contraseña se almacene jamás en texto plano. |
+| **KaTeX 0.16.11 (CDN)** | Motor de renderizado matemático web. | Creado por Khan Academy. Es hasta 10 veces más rápido que *MathJax*. Renderiza código LaTeX (`$...$` o `$$...$$`) como fracciones, raíces y exponentes reales directamente en la pantalla del celular sin consumir datos excesivos. |
+| **HTML5, CSS3 puro y JavaScript Vanilla** | Frontend nativo sin frameworks. | **Decisión crítica de ingeniería:** No usamos *React, Angular o Vue* porque descargan paquetes de varios megabytes que agotan el plan de datos y enlentecen celulares modestos. El código nativo vuela en cualquier smartphone. |
+| **Python-Dotenv** | Gestor de variables de entorno. | Lee el archivo `.env` en local o las variables del panel de Render, protegiendo las credenciales de API para no subirlas nunca a GitHub por error. |
+
+> 💡 **Término Clave: WSGI (Web Server Gateway Interface)**  
+> **¿Qué significa?** Es el traductor estándar entre los servidores de internet (como Nginx o Gunicorn) y las aplicaciones hechas en Python (como Flask).  
+> **¿Cómo aplica en el proyecto?** Render ejecuta `gunicorn main:app --bind 0.0.0.0:$PORT` para atender a los usuarios de manera rápida y estable.
 
 ---
 
-## 4. 📂 Estructura de Archivos del Proyecto
+## 5. DESARROLLO POR SPRINTS Y PRUEBAS DE CAJA NEGRA
 
-```plaintext
-ingsof_proyecto/
-│
-├── .env                      # Variables de entorno (credenciales de Cloudflare y Gemini)
-├── requirements.txt          # Dependencias de Python para Render
-├── basedatos.sql             # Esquema SQL (8 tablas) para Cloudflare D1
-├── init_db.py                # Script manual de inicialización de tablas y datos
-│
-├── main.py                   # Servidor web principal Flask y endpoints de la API
-├── cloudflare_d1.py          # Módulo de conexión y consultas a Cloudflare D1
-├── cloudflare_ai.py          # Generador de imágenes educativas con Cloudflare Workers AI
-├── gemini_helper.py          # Integración con Google Gemini (explicaciones y ejercicios)
-├── listar_modelos.py         # Script para listar los modelos autorizados de Gemini
-│
-├── index.html                # Redirección automática inicial
-├── login.html                # Interfaz de inicio de sesión
-├── register.html             # Interfaz de registro de cuenta nueva
-├── dashboard.html            # Panel principal de selección de materias
-├── chat.html                 # Sala de estudio interactiva con chat e IA
-│
-├── css/
-│   └── styles.css            # Hoja de estilos compartida para toda la plataforma
-│
-├── Proyecto/                 # Documentación de análisis y requerimientos originales
-└── INFORME_PROYECTO.md       # Este informe técnico
+El desarrollo se organizó en 3 Sprints formales. En cada uno se ejecutaron **Pruebas de Aceptación de Caja Negra**:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                             PRODUCT BACKLOG                                 │
+└──────────────────────────────────────┬──────────────────────────────────────┘
+                                       │
+         ┌─────────────────────────────┼─────────────────────────────┐
+         ▼                             ▼                             ▼
+   [ SPRINT 1 ]                  [ SPRINT 2 ]                  [ SPRINT 3 ]
+   Autenticación &               Tutoría Socrática,            Práctica Interactiva &
+   Gestión de Materias           Historial & Perfil            Evaluación Formativa
+   • HU-01: Registro             • HU-06: Preguntas & Chat     • HU-10: Generar Ejercicios
+   • HU-02: Inicio Sesión        • HU-07: Tutoría Socrática    • HU-11: Enviar Solución
+   • HU-03: Cierre Sesión        • HU-08: Historial en D1      • HU-12: Retroalimentación
+   • HU-04: Ver Materias         • HU-09: Apoyo Visual AI      • HU-13: Progreso y Nivel
+   • HU-05: Crear Materia        • Perfil de Asociación (RF12) • Métricas aciertos (RF13)
 ```
 
----
+> 💡 **Término Clave: Pruebas de Caja Negra (Black Box Testing)**  
+> **¿Qué significa?** Son pruebas donde el evaluador prueba el sistema desde afuera (como un usuario normal), ingresando datos y verificando que la salida sea la correcta, sin mirar el código interno.  
+> **¿Cómo aplica en el proyecto?** En el informe (páginas 28-29, 35-36 y 43-44) se documentaron casos de prueba como `CP-S1-01` (Registro válido) o `CP-S1-02` (Rechazo de correo duplicado por restricción `UNIQUE` en la base de datos). Todas las pruebas obtuvieron estado **PASÓ**.
 
-## 5. 🔍 Explicación Detallada del Código y Funcionamiento
-
-### A. Backend Principal (`main.py`)
-El archivo `main.py` es el núcleo del backend. Administra las rutas del servidor y las peticiones enviadas desde el navegador:
-- **Autenticación Segura con Hash (RNF-05)**:
-  - `POST /api/register`: Recibe nombre, correo y contraseña. Si el correo no existe, crea el registro con `generate_password_hash` (werkzeug con sal) y asigna sesión activa.
-  - `POST /api/login`: Busca por correo y verifica con `check_password_hash` (con migración automática de cuentas viejas en texto plano).
-  - `GET /api/sesion`: Retorna si el visitante está autenticado y su nombre para mostrarlo en el menú superior.
-  - `POST /api/logout`: Limpia las cookies de sesión y desconecta al usuario.
-- **Gestión de Materias**:
-  - `GET /api/materias`: Devuelve la lista de materias guardadas en Cloudflare D1.
-  - `POST /api/materias`: Permite a los estudiantes añadir materias personalizadas (ej. Historia, Biología).
-- **Tutoría con IA y Ejercicios**:
-  - `POST /api/chat`: Recibe la pregunta del estudiante, consulta el historial previo en la base de datos, envía el contexto a Gemini y guarda tanto la pregunta como la respuesta generada.
-  - `GET /api/historial`: Carga la conversación previa de la materia seleccionada.
-  - `POST /api/ejercicio`: Solicita a Gemini un problema práctico con enunciado y solución.
-  - `POST /api/revisar`: Envía la solución del estudiante a Gemini para evaluar si es correcta y ofrecer retroalimentación paso a paso.
-  - `GET /api/modelos`: Endpoint público para consultar en JSON qué modelos de Gemini están activos en la cuenta.
+### Resumen de Pruebas Destacadas del Informe:
+1. **CP-S1-01 (Registro con datos válidos):** Se envía nombre, correo y clave $\rightarrow$ se guarda con hash y sal en D1 $\rightarrow$ **PASÓ**.
+2. **CP-S1-02 (Control de correo duplicado):** Se intenta registrar un correo ya existente $\rightarrow$ la BD rechaza por `UNIQUE` y el backend retorna error 400 $\rightarrow$ **PASÓ**.
+3. **CP-S1-03 (Login con clave errónea):** `check_password_hash` da falso y no permite iniciar sesión $\rightarrow$ **PASÓ**.
+4. **CP-S2-04 (Persistencia del chat):** El estudiante envía una pregunta, recarga el navegador y la conversación sigue visible gracias a `GET /api/historial` $\rightarrow$ **PASÓ**.
+5. **CP-S3-08 (Evaluación con error en el procedimiento):** El estudiante da una respuesta numérica incorrecta en un problema de física $\rightarrow$ la IA detecta en qué paso falló, lo anima con empatía y le muestra la solución correcta $\rightarrow$ **PASÓ**.
 
 ---
 
-### B. Base de Datos en la Nube (`cloudflare_d1.py`)
-Conecta la aplicación con la base de datos Cloudflare D1 mediante peticiones HTTP a su API REST:
-- **Auto-inicialización Segura (`asegurar_inicializacion()`)**:
-  Al encender el servidor en Render, este método verifica y crea automáticamente las 8 tablas (`usuarios`, `materias`, `perfiles_aprendizaje`, `nivel_usuario`, `mensajes`, `respuestas`, `ejercicios`, `respuestas_ejercicios`) y puebla las 4 materias base globales. Ver esquema completo en `basedatos.sql`.
-- **Tolerancia a Fallos**:
-  Si la base de datos tarda en responder o hay un retraso de conexión, las funciones de chat capturan la excepción sin interrumpir el flujo, garantizando que el estudiante siempre reciba la respuesta de la IA.
+## 6. LA BASE DE DATOS: MODELO ENTIDAD-RELACIÓN (8 TABLAS)
+
+El sistema utiliza una base de datos relacional normalizada en **Cloudflare D1** (`basedatos.sql`), compuesta por 8 tablas:
+
+1. **`usuarios`**: Almacena `id`, `nombre`, `email` (con restricción `UNIQUE`) y `contrasena` (hash con sal).
+2. **`materias`**: Contiene las 4 materias base (`es_base = 1`) más las materias privadas creadas por los estudiantes (`usuario_id`).
+3. **`perfiles_aprendizaje`**: Cumple el **RF-12**. Guarda el estilo o intereses del alumno (ej. *"aprendo con ejemplos de cocina o fútbol"*). Relación 1:1 con `usuarios`.
+4. **`nivel_usuario`**: Cumple el **RF-11** y **RF-13**. Registra el nivel por materia (`basico`, `intermedio`, `avanzado`), el total de mensajes, intentos y aciertos de ejercicios.
+5. **`mensajes`**: Registra cada duda formulada por el estudiante con fecha, `usuario_id` y `materia_id`.
+6. **`respuestas`**: Guarda la explicación paso a paso de la IA conectada mediante Foreign Key a `mensajes(id)`. Incluye la columna `imagen_url` si se generó una ilustración.
+7. **`ejercicios`**: Repositorio de problemas generados por la IA con enunciado, respuesta esperada y nivel de dificultad.
+8. **`respuestas_ejercicios`**: Registra cada respuesta enviada por el estudiante, si fue correcta (`es_correcta = 1/0`), la retroalimentación recibida y la fecha.
+
+> 💡 **Término Clave: Restricción UNIQUE y Clave Foránea (Foreign Key)**  
+> **¿Qué significan?**  
+> - `UNIQUE`: Regla que prohíbe que existan dos filas con el mismo valor (ej. dos cuentas con el mismo correo).  
+> - `FOREIGN KEY`: Un enlace que garantiza que un registro hijo (como un mensaje) pertenezca obligatoriamente a un registro padre existente (como un usuario registrado).  
+> **¿Cómo aplica en el proyecto?** Evita registros huérfanos y garantiza integridad referencial en Cloudflare D1.
 
 ---
 
-### C. Inteligencia Artificial Adaptativa (`gemini_helper.py` y `listar_modelos.py`)
-- **Detección Dinámica de Modelos**:
-  Para evitar errores de modelos obsoletos (como `404 NOT_FOUND` en versiones anteriores), `gemini_helper.py` consulta en tiempo real qué modelos tiene habilitados la API Key del usuario (`client.models.list()`).
-- **Sistema de Respaldo (*Fallback*)**:
-  Si un modelo específico no responde o se encuentra saturado, el sistema cambia automáticamente al siguiente modelo disponible de la lista (ej. `gemini-2.5-flash`, `gemini-1.5-flash`, `gemini-1.5-pro`) sin mostrar mensajes de error al usuario.
-- **Prompts Pedagógicos**:
-  Configura a la IA bajo el rol de **"EduAsistente"**, forzándola a responder siempre en español, con tono empático, dividiendo las explicaciones en 4 secciones claras (Concepto, Fórmulas/Reglas, Procedimiento paso a paso y Conclusión).
+## 7. INTELIGENCIA ARTIFICIAL: ANDAMIAJE SOCRÁTICO, KATEX Y WORKERS AI
+
+En `gemini_helper.py` reside la lógica pedagógica del tutor virtual:
+
+### 7.1 El Método Socrático y las 4 Secciones Obligatorias
+El modelo no responde como un chatbot ordinario, sino que sigue una plantilla pedagógica estricta:
+1. **Concepto Clave:** Explicado con lenguaje llano y una analogía del mundo real.
+2. **Fórmulas y Reglas:** Específicas para la materia, formateadas con KaTeX.
+3. **Procedimiento Paso a Paso:** Desglose numerado ("Paso 1", "Paso 2") sin asumir conocimientos previos del estudiante.
+4. **Conclusión y Consejo Práctico:** Regla mnemotécnica o tip para no olvidar el tema.
+
+### 7.2 Renderizado Tipográfico con KaTeX
+- Transforma código matemático como `$\frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$` en ecuaciones tipográficas perfectas.
+- Permite que las fórmulas químicas ($H_2O$, $CO_2$, $H_2SO_4$) se lean con subíndices exactos en la pantalla del celular.
+
+### 7.3 Generación Visual con Cloudflare Workers AI
+En `cloudflare_ai.py` se implementaron dos modos de apoyo visual:
+- **Modo Preciso (`POST /api/ilustrar`):** Emplea modelos Text-to-Image como `@cf/black-forest-labs/flux-1-schnell` con un prompt enriquecido para generar diagramas esquemáticos en blanco y negro con trazo grueso y fondo limpio.
+- **Modo Creativo / Esquema (`POST /api/esquema`):** Produce un esquema conceptual estructurado de texto y viñetas para resumir las ideas visualmente sin consumo excesivo de inferencia.
+
+### 7.4 Detección Dinámica de Modelos y Mecanismo Fallback
+- **Problema:** En el desarrollo de software con IA, las APIs actualizan y deprecian nombres de modelos frecuentemente (provocando errores `404 NOT_FOUND`).
+- **Nuestra Solución:** `gemini_helper.py` consulta en tiempo real `client.models.list()`. Si un modelo se satura, el código salta automáticamente al siguiente (`gemini-2.5-flash` $\rightarrow$ `gemini-1.5-flash` $\rightarrow$ `gemini-1.5-pro`) sin interrumpir la sesión del estudiante.
 
 ---
 
-### D. Frontend Interactivo
-- **`register.html`**:
-  - Se corrigió el campo de nombre eliminando valores predeterminados fijos. Ahora incluye un texto de sugerencia (`placeholder="Ej. Carlos"`) que se borra automáticamente en cuanto el usuario comienza a escribir.
-- **`login.html`**:
-  - Formulario limpio con botón para alternar la visibilidad de la contraseña (👁 / 🙈) y mensajes de error claros en caso de credenciales inválidas.
-- **`dashboard.html`**:
-  - Muestra el nombre real del estudiante autenticado.
-  - Carga las materias dinámicamente desde Cloudflare D1 con tarjetas estilizadas y temáticas.
-  - Incluye una ventana modal para añadir nuevas materias en un clic.
-- **`chat.html`**:
-  - Muestra el encabezado de la materia en estudio (ej. Física, Matemáticas).
-  - Carga el historial previo de conversación.
-  - Envía dudas y muestra la respuesta de Gemini en tiempo real.
-  - Incluye el botón **"🎯 Dame un ejercicio de práctica"**, el cual genera una caja interactiva donde el estudiante escribe su solución y recibe retroalimentación inmediata con un botón de verificación.
-  - Botón para copiar respuestas al portapapeles.
+## 8. SEGURIDAD, ÉTICA Y DISCLAIMER EDUCATIVO
+
+Si el docente pregunta sobre la ética y la seguridad del sistema:
+
+1. **Seguridad Criptográfica (RNF-05):** Las contraseñas se almacenan mediante `generate_password_hash` con algoritmo `scrypt` o `pbkdf2` con sal aleatoria. Las sesiones de Flask se firman mediante cookies encriptadas con `SECRET_KEY`.
+2. **Aislamiento Multiusuario:** Las consultas SQL aplican aislamiento estricto:
+   ```sql
+   WHERE usuario_id = ? AND materia_id = ?
+   ```
+   Un estudiante jamás puede ver los mensajes, preguntas o ejercicios de otro.
+3. **Disclaimer Ético de Inteligencia Artificial (Apartado 8.7.6 del Informe):**  
+   En la interfaz del dashboard y del chat se incluye un aviso transparente informando que EduAsistente es una **herramienta de apoyo pedagógico** y que el estudiante debe contrastar siempre sus dudas con sus libros oficiales o con su profesor del colegio, fomentando el pensamiento crítico y el uso responsable de la IA.
 
 ---
 
-## 6. 🧠 Preguntas Clave sobre la Arquitectura del Sistema
+## 9. CATÁLOGO DE ENDPOINTS DE LA API REST
 
-### 1. ¿Qué ocurre si un usuario pregunta por Química y otro entra a Física y dice "¿En qué estábamos?"?
-* **Aislamiento Total**: Cada mensaje en Cloudflare D1 se guarda con `usuario_id` y `materia_id`.
-* Cuando el nuevo usuario entra a Física, la consulta SQL filtra exclusivamente:
-  ```sql
-  WHERE usuario_id = ? AND materia_id = ?
-  ```
-* Al no haber mensajes previos para ese usuario en Física, el historial está vacío. La IA recibe el contexto de Física y le responderá cordialmente que apenas van a comenzar, sin mezclar nunca temas de otros usuarios o de otras materias.
-
-### 2. Si el modelo de Gemini se agota o cambia, ¿cómo recuerda la conversación?
-* Los modelos de IA no almacenan recuerdos en sus servidores (*son stateless*).
-* **La memoria real vive en tu base de datos Cloudflare D1**.
-* Cada vez que se envía una pregunta, el backend extrae los últimos mensajes de la base de datos y se los envía como contexto al modelo activo en ese instante. Si el modelo cambia de `gemini-2.5-flash` a `gemini-1.5-flash`, el nuevo modelo recibe el mismo historial y continúa la tutoría sin perder el hilo.
-
----
-
-## 7. 🚀 Guía de Despliegue en Render
-
-Para desplegar la aplicación en **Render** (Web Service):
-
-1. **Configuración del Servicio**:
-   - **Environment**: `Python 3`
-   - **Build Command**:
-     ```bash
-     pip install -r requirements.txt
-     ```
-   - **Start Command**:
-     ```bash
-     gunicorn main:app --bind 0.0.0.0:$PORT
-     ```
-
-2. **Variables de Entorno en el Dashboard de Render** (nombres exactos):
-   - `API`: Clave de Google Gemini (`AIzaSy...`).
-   - `CLOUDFLARE_ACCOUNT_ID`: ID de la cuenta de Cloudflare.
-   - `CLOUDFLARE_DATABASE_ID`: ID de la base D1.
-   - `CLOUDFLARE_API_TOKEN`: Token con permisos D1 (lectura/escritura).
-   - `CLOUDFLARE_API_TOKEN_IMAGEN`: Token para Workers AI (si no se define, se reutiliza `CLOUDFLARE_API_TOKEN`).
-   - `SECRET_KEY`: (opcional, recomendado) Firma de sesiones Flask. Si no se define, se usa valor por defecto.
-
-3. **Verificación de Modelos**:
-   Una vez desplegado, puedes abrir en tu navegador:
-   `https://<tu-subdominio-en-render>.onrender.com/api/modelos`
-   para comprobar la lista de modelos de IA activos en tu cuenta.
+| Método | Endpoint | Sprint | Descripción Funcional |
+| :---: | :--- | :---: | :--- |
+| `POST` | `/api/register` | Sprint 1 | Registra nuevo estudiante con hash seguro (RNF-05). |
+| `POST` | `/api/login` | Sprint 1 | Valida credenciales e inicializa la cookie de sesión. |
+| `POST` | `/api/logout` | Sprint 1 | Destruye la sesión activa en el servidor. |
+| `GET` | `/api/sesion` | Sprint 1 | Verifica el estado de autenticación y nombre del usuario. |
+| `GET` | `/api/materias` | Sprint 1 | Obtiene las 4 materias base más las materias privadas. |
+| `POST` | `/api/materias` | Sprint 1 | Registra una nueva materia personalizada del estudiante. |
+| `POST` | `/api/chat` | Sprint 2 | Procesa la duda del alumno, consulta D1 y responde con Gemini. |
+| `GET` | `/api/historial` | Sprint 2 | Recupera el historial de chat por usuario y materia. |
+| `GET/PUT`| `/api/perfil` | Sprint 2 | Consulta o actualiza el estilo de aprendizaje (RF-12). |
+| `POST` | `/api/ilustrar` | Sprint 2 | Genera diagrama visual con Cloudflare Workers AI. |
+| `POST` | `/api/esquema` | Sprint 2 | Genera esquema conceptual en texto estructurado. |
+| `POST` | `/api/ejercicio` | Sprint 3 | Genera un ejercicio práctico adaptado al tema (RF-08). |
+| `POST` | `/api/revisar` | Sprint 3 | Evalúa la solución, da feedback y actualiza aciertos (RF-09/10/13). |
+| `GET` | `/api/modelos` | Soporte | Monitorea qué modelos de Gemini están activos en la cuenta. |
 
 ---
 
-## 8. ✅ Conclusión
+## 10. BANCO DE PREGUNTAS TÍPICAS DEL JURADO Y RESPUESTAS MAESTRAS
 
-El proyecto **EduAsistente v1.0** se encuentra completamente operativo y optimizado para la nube. Posee una estructura limpia, contraseñas protegidas con hash `werkzeug` con sal (RNF-05), conexión persistente a Cloudflare D1, imágenes con Cloudflare Workers AI, integración inteligente con Google Gemini y una interfaz de usuario atractiva, accesible y orientada a estudiantes de secundaria.
+### ❓ Pregunta 1: "¿Por qué afirman que el sistema está diseñado exclusivamente para celulares si es una página web?"
+> **Respuesta:**  
+> *"Porque se diseñó bajo la filosofía **Mobile-First (Móvil Primero)**. Los elementos táctiles tienen un tamaño mínimo de 48 píxeles para ser cómodamente pulsados con los dedos, las cuadrículas del dashboard son de 2x2 para pantallas angostas, el chat ajusta su campo de texto al teclado virtual del smartphone y el peso de las páginas es inferior a 50 KB para que cargue velozmente incluso con conexiones móviles 3G o 4G inestables."*
+
+### ❓ Pregunta 2: "¿Cómo manejan el problema de que los modelos de Inteligencia Artificial 'no tienen memoria'?"
+> **Respuesta:**  
+> *"Los modelos de lenguaje son por naturaleza **stateless** (sin estado propio). La memoria reside en nuestra base de datos **Cloudflare D1**. Cada vez que el estudiante formula una nueva pregunta, el backend recupera los últimos mensajes de esa materia y se los envía como contexto a Gemini en el mismo cuerpo de la petición. De esta forma, el modelo siempre sabe de qué venían hablando sin saturar la memoria."*
+
+### ❓ Pregunta 3: "¿Qué diferencia a EduAsistente de que el alumno simplemente use ChatGPT directamente?"
+> **Respuesta:**  
+> *"ChatGPT estándar tiende a entregar las respuestas resueltas de inmediato, fomentando que el alumno copie y pegue la tarea sin reflexionar. EduAsistente está calibrado mediante un **System Prompt socrático** que prohíbe dar la tarea hecha: divide el aprendizaje en 4 pasos didácticos, evalúa las respuestas paso a paso indicando con empatía dónde se cometió el error, adapta analogías a los gustos del alumno (RF-12) y guarda el progreso cuantitativo de aciertos por materia (RF-13)."*
+
+### ❓ Pregunta 4: "¿Por qué no utilizaron una base de datos local como `sqlite3.connect('database.db')`?"
+> **Respuesta:**  
+> *"Porque en plataformas de computación en la nube como **Render**, los contenedores son efímeros. Esto significa que cada vez que el servicio se reinicia o se despliega una nueva versión, el disco duro local se restaura y los datos de los estudiantes se habrían borrado. Con **Cloudflare D1**, la base de datos SQLite vive en la infraestructura distribuida de Cloudflare, asegurando persistencia permanente y alta disponibilidad sin costo."*
+
+### ❓ Pregunta 5: "¿Cómo verificaron que el sistema funciona correctamente y cumple con los requerimientos?"
+> **Respuesta:**  
+> *"Siguiendo las mejores prácticas de la Ingeniería de Software, definimos una **Matriz de Trazabilidad** que vincula cada Requerimiento Funcional con una Historia de Usuario del Backlog y con su respectivo endpoint en la API REST. Además, en cada Sprint ejecutamos **Pruebas de Caja Negra** (documentadas en las tablas de aceptación del informe técnico), comprobando que todos los casos de prueba obtuvieron estado PASÓ."*
+
+---
+
+## 🏆 SÍNTESIS FINAL PARA EL CIERRE DE TU DEFENSA
+
+> 🗣️ *"Para concluir, EduAsistente demuestra cómo la Ingeniería de Software rigurosa —desde el levantamiento formal de necesidades con IEEE 830 y MoSCoW hasta el diseño en Sprints con Scrum y pruebas de caja negra— permite construir soluciones tecnológicas de alto impacto social. Logramos un software funcional, seguro, rápido y de costo cero que transforma un teléfono celular común en un tutor escolar paciente y de calidad para estudiantes que más lo necesitan. Muchas gracias, quedamos a disposición de sus preguntas."*
