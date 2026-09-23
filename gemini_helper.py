@@ -143,6 +143,37 @@ def _generar_con_modelos(contents, system_instruction: str, temperature: float =
     raise Exception(f"Error con los modelos {modelos_a_probar}: {ultimo_error}")
 
 
+def _extraer_json(texto: str) -> dict:
+    """Extrae el primer objeto JSON válido de la respuesta de la IA.
+
+    Gemini suele devolver ```json ... ``` o texto extra aunque se le pida
+    SOLO JSON. Esta función limpia cercas, busca el bloque { ... } más
+    grande y lo parsea. Lanza excepción si no hay JSON válido.
+    """
+    import re as _re
+    t = (texto or "").strip()
+    # Quitar cercas de código en cualquier posición
+    t = _re.sub(r"```(?:json)?", "", t).strip()
+    # Intento directo
+    try:
+        return json.loads(t)
+    except Exception:
+        pass
+    # Buscar el primer { ... } balanceado
+    inicio = t.find("{")
+    fin = t.rfind("}")
+    if inicio != -1 and fin != -1 and fin > inicio:
+        candidato = t[inicio:fin + 1]
+        try:
+            return json.loads(candidato)
+        except Exception:
+            pass
+        # Limpieza extra: comas colgantes antes de } o ]
+        candidato2 = _re.sub(r",\s*([}\]])", r"\1", candidato)
+        return json.loads(candidato2)
+    raise ValueError(f"Sin JSON válido en: {t[:200]}")
+
+
 def _limpiar_historial(historial: list | None, max_mensajes: int = 6,
                        max_chars: int = 600) -> list:
     """Recorta el historial para la IA: sin HTML, sin imágenes base64/data-URL.
@@ -235,14 +266,15 @@ Responde ÚNICAMENTE con un JSON válido:
     try:
         texto = _generar_con_modelos(
             contents=prompt,
-            system_instruction=f"{PROMPT_SISTEMA}\n\n{contexto_materia}",
+            system_instruction=(
+                "Eres un evaluador de nivel escolar. "
+                f"{contexto_materia} "
+                "Respondes ÚNICAMENTE con un objeto JSON válido, sin markdown."
+            ),
             temperature=0.3,
             max_tokens=500,  # solo un JSON corto
         ).strip()
-        if texto.startswith("```"):
-            texto = texto.split("\n", 1)[1]
-            texto = texto.rsplit("```", 1)[0].strip()
-        res = json.loads(texto)
+        res = _extraer_json(texto)
         nivel = str(res.get("nivel", "basico")).lower()
         if nivel not in ("basico", "intermedio", "avanzado"):
             nivel = "basico"
@@ -279,19 +311,34 @@ IMPORTANTE: Responde ÚNICAMENTE con un JSON válido con esta estructura:
     try:
         texto = _generar_con_modelos(
             contents=prompt,
-            system_instruction=f"{PROMPT_SISTEMA}\n\n{contexto_materia}",
+            # CORREGIDO: instrucción estricta SOLO-JSON. Antes se usaba
+            # PROMPT_SISTEMA (que ordena Markdown/pasos) y Gemini devolvía
+            # texto + JSON, json.loads fallaba y caía al fallback genérico.
+            system_instruction=(
+                "Eres un generador de ejercicios escolares. "
+                f"{contexto_materia} "
+                "Respondes ÚNICAMENTE con un objeto JSON válido, sin markdown, "
+                "sin cercas ```, sin explicaciones fuera del JSON."
+            ),
             temperature=0.8,
         ).strip()
 
-        if texto.startswith("```"):
-            texto = texto.split("\n", 1)[1]
-            texto = texto.rsplit("```", 1)[0].strip()
-
-        return json.loads(texto)
+        datos = _extraer_json(texto)
+        enunciado = str(datos.get("enunciado", "")).strip()
+        resp = str(datos.get("respuesta_correcta", "")).strip()
+        expl = str(datos.get("explicacion", "")).strip()
+        # Validar que sea un ejercicio real, no un texto vacío
+        if len(enunciado) < 20 or not resp:
+            raise ValueError(f"Ejercicio incompleto: {texto[:200]}")
+        return {"enunciado": enunciado,
+                "respuesta_correcta": resp,
+                "explicacion": expl}
     except Exception as e:
+        print("Aviso generar_ejercicio, usando respaldo:", e)
+        tema_seguro = f" de {tema[:80]}" if tema else f" de {materia}"
         return {
-            "enunciado": f"Ejercicio de {materia}: Plantea un problema de cinemática/operación y resuelve el primer paso.",
-            "respuesta_correcta": "Paso resuelto",
+            "enunciado": f"Ejercicio de {materia}{tema_seguro}: resuelve el problema planteado en tu última duda, mostrando datos, procedimiento y resultado.",
+            "respuesta_correcta": "Revisar con el procedimiento",
             "explicacion": f"Detalle: {str(e)}",
         }
 
@@ -317,15 +364,16 @@ Evalúa la respuesta y responde ÚNICAMENTE con un JSON válido:
     try:
         texto = _generar_con_modelos(
             contents=prompt,
-            system_instruction=f"{PROMPT_SISTEMA}\n\n{contexto_materia}",
+            system_instruction=(
+                "Eres un evaluador escolar justo. "
+                f"{contexto_materia} "
+                "Respondes ÚNICAMENTE con un objeto JSON válido, sin markdown, "
+                "sin cercas ```, sin texto fuera del JSON."
+            ),
             temperature=0.5,
         ).strip()
 
-        if texto.startswith("```"):
-            texto = texto.split("\n", 1)[1]
-            texto = texto.rsplit("```", 1)[0].strip()
-
-        res = json.loads(texto)
+        res = _extraer_json(texto)
         return {
             "es_correcta": bool(res.get("es_correcta", False)),
             "feedback": res.get("feedback", "No se pudo evaluar."),
@@ -377,10 +425,7 @@ def generar_prompt_imagen(pregunta: str, respuesta: str, materia: str = "",
             temperature=0.3,
             max_tokens=250,
         ).strip()
-        if bruto.startswith("```"):
-            bruto = bruto.split("\n", 1)[1]
-            bruto = bruto.rsplit("```", 1)[0].strip()
-        res = json.loads(bruto)
+        res = _extraer_json(bruto)
         prompt_en = str(res.get("prompt_en", ""))[:500] or f"educational diagram about {preg[:100]}"
         etiquetas = [str(e)[:20] for e in (res.get("etiquetas") or [])][:6]
         estilo = str(res.get("estilo", "lineal" if modo == "preciso" else "ilustrativo"))
