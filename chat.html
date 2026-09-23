@@ -439,6 +439,9 @@
           })
         });
         const data = await res.json();
+        if (data.respaldo && data.detalle) {
+          console.log('Aviso ejercicio respaldo:', data.detalle);
+        }
         if (data.ok && data.ejercicio) {
           const ej = data.ejercicio;
           const enunciadoTxt = String(ej.enunciado || '');

@@ -113,32 +113,43 @@ def _obtener_contexto_materia(materia: str) -> str:
 
 
 def _generar_con_modelos(contents, system_instruction: str, temperature: float = 0.7,
-                          max_tokens: int = 1200) -> str:
+                          max_tokens: int = 1200, json_mode: bool = False) -> str:
     """Intenta generar contenido probando con los modelos descubiertos en tu cuenta.
 
     `max_tokens` acota la respuesta: más rápido, menos memoria en Render free
     y mejor para leer en celular.
+    `json_mode=True` pide a Gemini `application/json` para no recibir Markdown.
     """
     client = obtener_cliente()
     modelos_a_probar = obtener_lista_modelos_activos()
     ultimo_error = None
 
-    for modelo in modelos_a_probar:
-        try:
-            response = client.models.generate_content(
-                model=modelo,
-                contents=contents,
-                config={
+    # Si json_mode falla en todos los modelos (algunos no soportan
+    # response_mime_type), se reintenta sin esa opción.
+    intentos_cfg = [True, False] if json_mode else [False]
+    for usar_json in intentos_cfg:
+        for modelo in modelos_a_probar:
+            try:
+                cfg = {
                     "system_instruction": system_instruction,
                     "temperature": temperature,
                     "max_output_tokens": max_tokens,
-                },
-            )
-            if response and response.text:
-                return response.text
-        except Exception as e:
-            ultimo_error = e
-            continue
+                }
+                if usar_json:
+                    cfg["response_mime_type"] = "application/json"
+                response = client.models.generate_content(
+                    model=modelo,
+                    contents=contents,
+                    config=cfg,
+                )
+                if response and response.text:
+                    return response.text
+            except Exception as e:
+                ultimo_error = e
+                continue
+        # Si ya probamos sin JSON, no hay más que intentar
+        if not usar_json:
+            break
 
     raise Exception(f"Error con los modelos {modelos_a_probar}: {ultimo_error}")
 
@@ -321,6 +332,7 @@ IMPORTANTE: Responde ÚNICAMENTE con un JSON válido con esta estructura:
                 "sin cercas ```, sin explicaciones fuera del JSON."
             ),
             temperature=0.8,
+            json_mode=True,
         ).strip()
 
         datos = _extraer_json(texto)
@@ -371,6 +383,7 @@ Evalúa la respuesta y responde ÚNICAMENTE con un JSON válido:
                 "sin cercas ```, sin texto fuera del JSON."
             ),
             temperature=0.5,
+            json_mode=True,
         ).strip()
 
         res = _extraer_json(texto)

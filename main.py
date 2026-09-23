@@ -441,13 +441,22 @@ def api_ejercicio():
         ejercicio.get("explicacion", "")
     )
 
+    # Si es respaldo (la IA falló), exponer el detalle en el log y al frontend
+    # para diagnosticar. El frontend lo muestra en console.log.
+    explicacion = str(ejercicio.get("explicacion", ""))
+    es_respaldo = explicacion.startswith("Detalle:")
+    if es_respaldo:
+        print(f"Aviso /api/ejercicio respaldo para '{materia_nombre}' tema='{tema[:80]}': {explicacion[:300]}")
+
     return jsonify({
         "ok": True,
         "ejercicio": {
             "id": guardado["id"] if guardado else None,
             "enunciado": ejercicio["enunciado"],
             "respuesta_correcta": ejercicio["respuesta_correcta"]
-        }
+        },
+        "respaldo": es_respaldo,
+        "detalle": explicacion if es_respaldo else ""
     })
 
 
