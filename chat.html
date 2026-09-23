@@ -441,19 +441,33 @@
         const data = await res.json();
         if (data.ok && data.ejercicio) {
           const ej = data.ejercicio;
+          const enunciadoTxt = String(ej.enunciado || '');
+          const respCorrectaTxt = String(ej.respuesta_correcta || '');
+          const ejIdTxt = String(ej.id || '');
           const bubble = botMsg.querySelector('.chat-message__bubble');
           bubble.innerHTML = `
             <strong>📝 Ejercicio de Práctica:</strong><br><br>
-            ${formatearMarkdown(ej.enunciado)}
+            ${formatearMarkdown(enunciadoTxt)}
             <div class="exercise-box">
               <div class="exercise-box__title">Tu Respuesta:</div>
               <input type="text" class="exercise-box__input" placeholder="Escribe tu respuesta aquí...">
-              <button class="exercise-box__btn" onclick="revisarEjercicio(this, '${ej.id || ''}', \`${escaparHTML(ej.enunciado)}\`, \`${escaparHTML(ej.respuesta_correcta || '')}\`)">
+              <button class="exercise-box__btn" type="button">
                 Verificar Respuesta
               </button>
               <div class="exercise-feedback" style="margin-top: 10px; font-weight: 600;"></div>
             </div>
           `;
+          // CORREGIDO: antes el enunciado/respuesta se metían dentro del
+          // atributo onclick con escaparHTML(). Si el texto traía comillas ("),
+          // backticks (`) o ${...}, rompía el HTML/JS y el botón quedaba muerto
+          // o solo pedía el resultado. Ahora se guardan en memoria (closure) y
+          // se usa addEventListener, sin interpolar texto en el HTML.
+          const btnVerificar = bubble.querySelector('.exercise-box__btn');
+          if (btnVerificar) {
+            btnVerificar.addEventListener('click', () => {
+              revisarEjercicio(btnVerificar, ejIdTxt, enunciadoTxt, respCorrectaTxt);
+            });
+          }
           if (window.renderizarMatematicas) renderizarMatematicas(bubble);
         } else if (res.status === 401 || res.status === 403) {
           botMsg.querySelector('.chat-message__bubble').textContent = 'Debes iniciar sesión para practicar.';
@@ -463,9 +477,26 @@
       }
     }
 
-    // Botón contextual al final de cada explicación (CU-06 paso 4)
+    // Botón contextual al final de cada explicación (CU-06 paso 4).
+    // CORREGIDO: antes siempre usaba `ultimaPregunta` (la última duda del chat),
+    // así que practicar una explicación ANTIGUA generaba un ejercicio del tema
+    // NUEVO. Ahora busca la pregunta del usuario más cercana ANTES de esta
+    // burbuja y usa esa como tema; solo si no la encuentra usa ultimaPregunta.
     window.practicarTema = function(btn) {
-      generarEjercicio(ultimaPregunta);
+      let tema = (ultimaPregunta || '').trim();
+      try {
+        const card = btn.closest('.chat-message');
+        let nodo = card ? card.previousElementSibling : null;
+        while (nodo) {
+          if (nodo.classList && nodo.classList.contains('chat-message--user')) {
+            const burbuja = nodo.querySelector('.chat-message__bubble');
+            const texto = (burbuja ? burbuja.textContent : '').trim();
+            if (texto) { tema = texto; break; }
+          }
+          nodo = nodo.previousElementSibling;
+        }
+      } catch (e) { /* fallback a ultimaPregunta */ }
+      generarEjercicio(tema);
     };
 
     // 8. Enviar pregunta a la API de IA

@@ -262,6 +262,13 @@ def generar_ejercicio(materia: str, tema: str = "", perfil: str = "",
     prompt = f"""Genera UN ejercicio de práctica de {materia}{tema_txt} para un estudiante de secundaria.
 {_bloque_personalizacion(perfil, prompt_nivel, nivel)}
 
+REGLAS DEL ENUNCIADO:
+- El "enunciado" debe plantear el PROBLEMA COMPLETO (datos + pregunta clara de qué resolver).
+- PROHIBIDO pedir solo el resultado final (ej. "dame solo el número"). Pide resolver el problema.
+- PROHIBIDO incluir la respuesta, ni pistas con el valor, dentro del "enunciado".
+- La "respuesta_correcta" va SOLO en su campo, breve y concreta.
+- La "explicacion" va SOLO en su campo, paso a paso.
+
 IMPORTANTE: Responde ÚNICAMENTE con un JSON válido con esta estructura:
 {{
     "enunciado": "El enunciado del ejercicio",
