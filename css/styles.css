@@ -771,7 +771,7 @@ input {
   color: white;
 }
 
-/* Chat bottom container (Acciones rápidas + Input) */
+/* Chat bottom container (Barra de entrada) */
 .chat-bottom-bar {
   position: fixed;
   bottom: 0;
@@ -785,39 +785,8 @@ input {
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4);
 }
 
-.chat-quick-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 14px 4px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-}
-.chat-quick-actions::-webkit-scrollbar {
-  display: none;
-}
-
-.quick-btn {
-  background: var(--bg-card);
-  color: var(--accent-blue);
-  border: 1px solid var(--border-color);
-  padding: 5px 11px;
-  border-radius: 20px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
-  transition: all 0.2s ease;
-}
-.quick-btn:hover {
-  background: rgba(59, 130, 246, 0.15);
-  border-color: var(--accent-blue);
-}
-
 .chat-input-bar {
-  padding: 6px 14px 14px;
+  padding: 12px 16px 18px;
   display: flex;
   gap: 10px;
   align-items: center;
@@ -825,8 +794,8 @@ input {
 
 .chat-input {
   flex: 1;
-  padding: 11px 16px;
-  font-size: 0.88rem;
+  padding: 12px 18px;
+  font-size: 0.9rem;
   color: var(--text-primary);
   background: var(--bg-card);
   border: 1.5px solid var(--border-input);
@@ -843,15 +812,15 @@ input {
 }
 
 .chat-send-btn {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   background: var(--accent-blue);
   border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   flex-shrink: 0;
   transition: all 0.2s;
   box-shadow: var(--shadow-button);
@@ -871,7 +840,7 @@ input {
 
 .chat-page .chat-messages {
   flex: 1;
-  padding-bottom: 120px;
+  padding-bottom: 85px;
 }
 
 /* ===== UTILITIES ===== */

@@ -132,19 +132,8 @@
       </div>
     </div>
 
-    <!-- Contenedor inferior fijo (Acciones rápidas + Barra de entrada) -->
+    <!-- Barra de entrada inferior fija -->
     <div class="chat-bottom-bar" id="chat-bottom-bar">
-      <!-- Acciones rápidas (Ejercicios de práctica + modo de imagen) -->
-      <div class="chat-quick-actions">
-        <button class="quick-btn" id="btn-practice">🎯 Practicar</button>
-        <button class="quick-btn" id="btn-example">💡 Ejemplo</button>
-        <div class="img-mode-toggle" role="group" aria-label="Modo de ilustración">
-          <button class="img-mode-btn" id="mode-preciso" type="button" title="Diagrama preciso">🎯 Preciso</button>
-          <button class="img-mode-btn" id="mode-creativo" type="button" title="Ilustración creativa">🎨 Creativo</button>
-        </div>
-      </div>
-
-      <!-- Barra de entrada -->
       <div class="chat-input-bar" id="chat-input-bar">
         <input
           type="text"
@@ -543,9 +532,6 @@
       if (e.key === 'Enter') enviarPregunta();
     });
 
-    // 9. Botón rápido: ejercicio general de la materia (HU-07, sin tema previo)
-    document.getElementById('btn-practice').addEventListener('click', () => generarEjercicio(''));
-
     // Modo de ilustración elegido por el estudiante: persistente por materia.
     // Default: Preciso en ciencias, Creativo en Lenguaje.
     const MODO_KEY = 'modo_imagen_' + materiaNombre;
@@ -556,18 +542,6 @@
       const m = localStorage.getItem(MODO_KEY) || modoDefault();
       return (m === 'creativo') ? 'creativo' : 'preciso';
     }
-    function pintarToggle() {
-      const m = obtenerModo();
-      document.getElementById('mode-preciso').classList.toggle('active', m === 'preciso');
-      document.getElementById('mode-creativo').classList.toggle('active', m === 'creativo');
-    }
-    document.getElementById('mode-preciso').addEventListener('click', () => {
-      localStorage.setItem(MODO_KEY, 'preciso'); pintarToggle();
-    });
-    document.getElementById('mode-creativo').addEventListener('click', () => {
-      localStorage.setItem(MODO_KEY, 'creativo'); pintarToggle();
-    });
-    pintarToggle();
 
     // Ver ilustración: el estudiante ELIGE entre Imagen IA o Esquema texto
     // (dibujo plano con letras, sin IA generativa, 100% legible).
@@ -741,12 +715,6 @@
         btn.disabled = false;
       }
     };
-
-    // 11. Botón rápido: Ejemplo sencillo
-    document.getElementById('btn-example').addEventListener('click', () => {
-      chatInput.value = `¿Puedes darme un ejemplo de la vida cotidiana sobre un tema de ${materiaNombre}?`;
-      enviarPregunta();
-    });
   </script>
 
 </body>
