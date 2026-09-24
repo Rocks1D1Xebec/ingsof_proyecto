@@ -449,9 +449,16 @@
           // o solo pedía el resultado. Ahora se guardan en memoria (closure) y
           // se usa addEventListener, sin interpolar texto en el HTML.
           const btnVerificar = bubble.querySelector('.exercise-box__btn');
+          const inputRespuesta = bubble.querySelector('.exercise-box__input');
+          const dispararRevision = () => {
+            revisarEjercicio(btnVerificar, ejIdTxt, enunciadoTxt, respCorrectaTxt);
+          };
           if (btnVerificar) {
-            btnVerificar.addEventListener('click', () => {
-              revisarEjercicio(btnVerificar, ejIdTxt, enunciadoTxt, respCorrectaTxt);
+            btnVerificar.addEventListener('click', dispararRevision);
+          }
+          if (inputRespuesta) {
+            inputRespuesta.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter') dispararRevision();
             });
           }
           if (window.renderizarMatematicas) renderizarMatematicas(bubble);
@@ -682,8 +689,13 @@
       }
 
       btn.disabled = true;
+      input.disabled = true;
       feedbackDiv.textContent = 'Revisando tu respuesta con el profesor virtual... 🔍';
       feedbackDiv.style.color = '#2563eb';
+
+      // Mostrar la respuesta del estudiante inmediatamente como mensaje del chat
+      agregarMensajeUsuario(`Mi respuesta: ${respuestaEstudiante}`);
+      const botMsg = agregarMensajeAsistente('Evaluando tu solución... ⏳');
 
       try {
         const res = await fetch('/api/revisar', {
@@ -700,21 +712,35 @@
         });
 
         const data = await res.json();
+        const bubble = botMsg.querySelector('.chat-message__bubble');
+
         if (data.ok) {
-          if (data.es_correcta) {
-            feedbackDiv.style.color = '#16a34a';
-            feedbackDiv.innerHTML = `✅ <strong>¡Excelente trabajo!</strong><br>${formatearMarkdown(data.feedback)}`;
-          } else {
-            feedbackDiv.style.color = '#dc2626';
-            feedbackDiv.innerHTML = `⚠️ <strong>Revisemos juntos:</strong><br>${formatearMarkdown(data.feedback)}`;
-          }
+          const encabezado = data.es_correcta
+            ? '✅ **¡Excelente trabajo!**'
+            : '⚠️ **Revisemos juntos:**';
+          const feedbackTexto = `${encabezado}\n\n${data.feedback || ''}`;
+          bubble.innerHTML = formatearMarkdown(feedbackTexto);
+          if (window.renderizarMatematicas) renderizarMatematicas(bubble);
+
+          // También reflejar en la cajita del ejercicio
+          feedbackDiv.style.color = data.es_correcta ? '#16a34a' : '#dc2626';
+          feedbackDiv.innerHTML = `${encabezado}<br>${formatearMarkdown(data.feedback || '')}`;
         } else {
-          feedbackDiv.textContent = data.error || 'Error al revisar.';
+          const errTxt = data.error || 'Error al revisar.';
+          feedbackDiv.textContent = errTxt;
+          bubble.textContent = errTxt;
+          btn.disabled = false;
+          input.disabled = false;
         }
       } catch (err) {
-        feedbackDiv.textContent = 'Error al conectar con el revisor.';
-      } finally {
+        const errTxt = 'Error al conectar con el revisor.';
+        feedbackDiv.textContent = errTxt;
+        const bubble = botMsg.querySelector('.chat-message__bubble');
+        if (bubble) bubble.textContent = errTxt;
         btn.disabled = false;
+        input.disabled = false;
+      } finally {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
       }
     };
   </script>
