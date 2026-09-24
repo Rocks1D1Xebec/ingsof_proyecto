@@ -347,12 +347,41 @@ IMPORTANTE: Responde ÚNICAMENTE con un JSON válido con esta estructura:
                 "explicacion": expl}
     except Exception as e:
         print("Aviso generar_ejercicio, usando respaldo:", e)
-        tema_seguro = f" de {tema[:80]}" if tema else f" de {materia}"
-        return {
-            "enunciado": f"Ejercicio de {materia}{tema_seguro}: resuelve el problema planteado en tu última duda, mostrando datos, procedimiento y resultado.",
-            "respuesta_correcta": "Revisar con el procedimiento",
-            "explicacion": f"Detalle: {str(e)}",
+        # Ejercicios autónomos completos por materia para que el estudiante siempre tenga una pregunta concreta
+        ejercicios_base = {
+            "Matemáticas": {
+                "enunciado": "Resuelve la siguiente ecuación de primer grado paso a paso:\n\n$$2x + 6 = 18$$\n\nEncuentra el valor de $x$.",
+                "respuesta_correcta": "6",
+                "explicacion": "Restamos 6 a ambos lados: 2x = 12. Luego dividimos entre 2: x = 6."
+            },
+            "Física": {
+                "enunciado": "Un automóvil viaja a velocidad constante de $20\\text{ m/s}$ en línea recta durante $15\\text{ segundos}$. ¿Qué distancia total recorre?",
+                "respuesta_correcta": "300 metros",
+                "explicacion": "Usamos la fórmula del MRU: $d = v \\cdot t$. Sustituyendo: $d = 20 \\cdot 15 = 300\\text{ m}$."
+            },
+            "Química": {
+                "enunciado": "Indica cuál es el número atómico ($Z$) y la cantidad de protones de un átomo neutro de Carbono ($C$).",
+                "respuesta_correcta": "Z = 6 (6 protones)",
+                "explicacion": "El carbono ocupa la posición 6 en la tabla periódica, por lo que su número atómico Z es 6 y tiene 6 protones."
+            },
+            "Lenguaje": {
+                "enunciado": "Identifica el sujeto y el predicado en la siguiente oración:\n\n*\"Los estudiantes dedicados comprenden el tema con facilidad.\"*",
+                "respuesta_correcta": "Sujeto: Los estudiantes dedicados | Predicado: comprenden el tema con facilidad",
+                "explicacion": "El sujeto es quien realiza la acción ('Los estudiantes dedicados') y el predicado es todo lo que se dice del sujeto a partir del verbo."
+            }
         }
+        fallback = ejercicios_base.get(materia, {
+            "enunciado": f"Explica un concepto clave de {materia} con un ejemplo práctico.",
+            "respuesta_correcta": "Concepto con ejemplo",
+            "explicacion": "Presenta una definición clara y acompáñala de una aplicación cotidiana."
+        })
+        if tema:
+            fallback = {
+                "enunciado": f"Ejercicio práctico sobre **{tema}** ({materia}):\n\nPlantea la definición o fórmula principal de este tema y calcula o explica un caso con tus propias palabras.",
+                "respuesta_correcta": f"Aplicación correcta de {tema}",
+                "explicacion": f"Demostración paso a paso sobre {tema}."
+            }
+        return fallback
 
 
 # ─── Revisar respuesta del estudiante ──────────────────────────

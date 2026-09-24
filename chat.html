@@ -12,27 +12,29 @@
   <style>
     /* Estilos adicionales simples para ejercicios en el chat */
     .exercise-box {
-      background: #f8fafc;
-      border: 2px solid #e2e8f0;
+      background: var(--bg-secondary, #161b22);
+      border: 1px solid var(--border-color, #2d333b);
       border-radius: 12px;
       padding: 16px;
       margin-top: 10px;
     }
     .exercise-box__title {
       font-weight: 700;
-      color: #3b82f6;
+      color: var(--accent-blue, #3b82f6);
       margin-bottom: 8px;
     }
     .exercise-box__input {
       width: 100%;
-      padding: 10px;
-      border: 1px solid #cbd5e1;
+      padding: 10px 14px;
+      background: var(--bg-card, #1c2333);
+      color: var(--text-primary, #e6edf3);
+      border: 1px solid var(--border-input, #2d3748);
       border-radius: 8px;
       margin-top: 8px;
       font-size: 0.95rem;
     }
     .exercise-box__btn {
-      background: #3b82f6;
+      background: var(--accent-blue, #3b82f6);
       color: white;
       border: none;
       padding: 8px 16px;
@@ -40,27 +42,12 @@
       font-weight: 600;
       margin-top: 10px;
       cursor: pointer;
+      transition: background 0.2s;
     }
-    .chat-quick-actions {
-      display: flex;
-      gap: 10px;
-      padding: 8px 16px;
-      background: #ffffff;
-      border-top: 1px solid #f1f5f9;
+    .exercise-box__btn:hover {
+      background: var(--accent-blue-hover, #2563eb);
     }
-    .quick-btn {
-      background: #eff6ff;
-      color: #2563eb;
-      border: 1px solid #bfdbfe;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .quick-btn:hover {
-      background: #dbeafe;
-    }
+
     /* Botón "Cambiar materia": fijo arriba, se oculta al bajar y reaparece al subir */
     #btn-back {
       transition: opacity 0.25s ease, transform 0.25s ease;
@@ -145,28 +132,31 @@
       </div>
     </div>
 
-    <!-- Acciones rápidas (Ejercicios de práctica + modo de imagen) -->
-    <div class="chat-quick-actions">
-      <button class="quick-btn" id="btn-practice">🎯 Dame un ejercicio de práctica</button>
-      <button class="quick-btn" id="btn-example">💡 Dame un ejemplo sencillo</button>
-      <div class="img-mode-toggle" role="group" aria-label="Modo de ilustración">
-        <button class="img-mode-btn" id="mode-preciso" type="button">🎯 Preciso</button>
-        <button class="img-mode-btn" id="mode-creativo" type="button">🎨 Creativo</button>
+    <!-- Contenedor inferior fijo (Acciones rápidas + Barra de entrada) -->
+    <div class="chat-bottom-bar" id="chat-bottom-bar">
+      <!-- Acciones rápidas (Ejercicios de práctica + modo de imagen) -->
+      <div class="chat-quick-actions">
+        <button class="quick-btn" id="btn-practice">🎯 Practicar</button>
+        <button class="quick-btn" id="btn-example">💡 Ejemplo</button>
+        <div class="img-mode-toggle" role="group" aria-label="Modo de ilustración">
+          <button class="img-mode-btn" id="mode-preciso" type="button" title="Diagrama preciso">🎯 Preciso</button>
+          <button class="img-mode-btn" id="mode-creativo" type="button" title="Ilustración creativa">🎨 Creativo</button>
+        </div>
       </div>
-    </div>
 
-    <!-- Barra de entrada -->
-    <div class="chat-input-bar" id="chat-input-bar">
-      <input
-        type="text"
-        class="chat-input"
-        id="chat-input"
-        placeholder="Escribe tu duda..."
-        autocomplete="off"
-      >
-      <button class="chat-send-btn" id="btn-send" aria-label="Enviar mensaje">
-        ✈
-      </button>
+      <!-- Barra de entrada -->
+      <div class="chat-input-bar" id="chat-input-bar">
+        <input
+          type="text"
+          class="chat-input"
+          id="chat-input"
+          placeholder="Escribe tu duda..."
+          autocomplete="off"
+        >
+        <button class="chat-send-btn" id="btn-send" aria-label="Enviar mensaje">
+          ✈
+        </button>
+      </div>
     </div>
 
   </div>
@@ -192,18 +182,20 @@
     document.title = `EduAsistente - ${materiaNombre}`;
     document.getElementById('welcome-bubble').textContent = `¡Hola! Soy tu asistente de ${materiaNombre}. Escríbeme cualquier duda, fórmula o tema que no entiendas y lo resolveremos paso a paso.`;
 
-    // 2. Verificar sesión activa
+    // 2. Verificar sesión activa (mostrar nombre inmediato desde localStorage para evitar "Cargando...")
+    const nombreGuardado = localStorage.getItem('usuario_nombre') || 'Estudiante';
+    const elNavbarUser = document.getElementById('navbar-user');
+    if (elNavbarUser) elNavbarUser.textContent = 'Hola, ' + nombreGuardado;
+
     fetch('/api/sesion')
       .then(res => res.json())
       .then(data => {
         if (data.autenticado && data.usuario) {
-          document.getElementById('navbar-user').textContent = 'Hola, ' + data.usuario.nombre;
+          if (elNavbarUser) elNavbarUser.textContent = 'Hola, ' + data.usuario.nombre;
+          localStorage.setItem('usuario_nombre', data.usuario.nombre);
         }
       })
-      .catch(() => {
-        const nombreLocal = localStorage.getItem('usuario_nombre') || 'Estudiante';
-        document.getElementById('navbar-user').textContent = 'Hola, ' + nombreLocal;
-      });
+      .catch(() => {});
 
     // 3. Volver y Logout
     document.getElementById('btn-back').addEventListener('click', () => {
