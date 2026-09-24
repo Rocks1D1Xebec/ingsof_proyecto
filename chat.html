@@ -408,6 +408,8 @@
 
     // Genera un ejercicio; si se pasa tema usa contexto (botón por burbuja), si no es general (HU-07)
     async function generarEjercicio(tema) {
+      const textoSolicitud = tema ? `🎯 Practicar: ${tema}` : '🎯 Ejercicio de práctica';
+      agregarMensajeUsuario(textoSolicitud);
       const botMsg = agregarMensajeAsistente('Generando un ejercicio de práctica para ti... 🎯');
       try {
         const res = await fetch('/api/ejercicio', {

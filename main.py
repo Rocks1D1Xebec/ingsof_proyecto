@@ -441,6 +441,13 @@ def api_ejercicio():
         ejercicio.get("explicacion", "")
     )
 
+    # Persistir en el historial de chat para que aparezca al salir y volver
+    texto_solicitud = f"🎯 Practicar: {tema}" if tema else "🎯 Ejercicio de práctica"
+    msg_chat = db.guardar_mensaje(int(usuario_id), materia_id, texto_solicitud)
+    if msg_chat:
+        texto_resp = f"**📝 Ejercicio de Práctica:**\n\n{ejercicio['enunciado']}"
+        db.guardar_respuesta(msg_chat["id"], texto_resp)
+
     # Si es respaldo (la IA falló), exponer el detalle en el log y al frontend
     # para diagnosticar. El frontend lo muestra en console.log.
     explicacion = str(ejercicio.get("explicacion", ""))
@@ -502,6 +509,13 @@ def api_revisar():
     )
     if materia_id_rev and db.materia_visible_para(materia_id_rev, int(usuario_id)):
         db.sumar_revision_nivel(int(usuario_id), materia_id_rev, es_ok)
+
+    # Persistir en el historial de chat
+    msg_rev = db.guardar_mensaje(int(usuario_id), materia_id_rev or 1, f"Mi respuesta: {respuesta_estudiante}")
+    if msg_rev:
+        icono_res = "✅ **¡Excelente trabajo!**" if es_ok else "⚠️ **Revisemos juntos:**"
+        texto_feedback = f"{icono_res}\n\n{evaluacion.get('feedback', '')}"
+        db.guardar_respuesta(msg_rev["id"], texto_feedback)
 
     return jsonify({
         "ok": True,
