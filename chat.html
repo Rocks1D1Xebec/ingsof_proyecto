@@ -786,7 +786,10 @@
       chatInput.value = '';
 
       // Mensaje de carga
-      const botMsg = agregarMensajeAsistente('Pensando la explicación paso a paso... ⏳');
+      const textoCarga = vozActiva
+        ? 'Pensando la explicación y preparando voz... ⏳🔊'
+        : 'Pensando la explicación paso a paso... ⏳';
+      const botMsg = agregarMensajeAsistente(textoCarga);
       btnSend.disabled = true;
 
       try {
@@ -809,10 +812,12 @@
             : '');
           if (window.renderizarMatematicas) renderizarMatematicas(bubble);
 
-          // Si el modo de lectura en voz alta está activado, comenzar a hablar automáticamente
+          // Si el modo de lectura en voz alta está activado, reproducir directamente
           if (vozActiva) {
             const btnAudio = botMsg.querySelector('.btn-audio-msg');
-            if (btnAudio) reproducirAudioMensaje(btnAudio);
+            if (btnAudio) {
+              reproducirAudioMensaje(btnAudio);
+            }
           }
         } else {
           bubble.textContent = data.error || 'Lo siento, no pude procesar la respuesta en este momento.';
@@ -1015,6 +1020,12 @@
           // También reflejar en la cajita del ejercicio
           feedbackDiv.style.color = data.es_correcta ? '#16a34a' : '#dc2626';
           feedbackDiv.innerHTML = `${encabezado}<br>${formatearMarkdown(data.feedback || '')}`;
+
+          // Si la voz está activa, leer también la retroalimentación automáticamente
+          if (vozActiva) {
+            const btnAudio = botMsg.querySelector('.btn-audio-msg');
+            if (btnAudio) reproducirAudioMensaje(btnAudio);
+          }
         } else {
           const errTxt = data.error || 'Error al revisar.';
           feedbackDiv.textContent = errTxt;
