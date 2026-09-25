@@ -88,8 +88,8 @@ Si el jurado pregunta por el proceso formal de ingeniería de software:
 ### 3.2 Priorización MoSCoW
 - **M (Must have - Indispensables / MVP):** Registro, inicio de sesión, materias, envío de preguntas, explicación paso a paso, generación y corrección de ejercicios en celular.
 - **S (Should have - Importantes):** Historial persistente, apoyo visual con imágenes/esquemas.
-- **C (Could have - Deseables):** Adaptación automática al nivel del alumno cada 20 mensajes y perfil de gustos para analogías. *(¡En nuestro proyecto logramos implementarlos todos!)*.
-- **W (Won't have this time - Para futuras versiones):** Tutoría por voz o reconocimiento de escritura a mano en fotos de cuaderno.
+- **C (Could have - Deseables):** Adaptación automática al nivel del alumno cada 20 mensajes, perfil de gustos para analogías y **lectura en voz alta de las explicaciones** (accesibilidad auditiva). *(¡En nuestro proyecto logramos implementarlos todos!)*.
+- **W (Won't have this time - Para futuras versiones):** Tutoría por voz (entrada de voz / dictado), reconocimiento de escritura a mano en fotos de cuaderno o envío de audio. *(Se implementó la lectura de voz de salida, no la captura de voz de entrada).*
 
 > 💡 **Término Clave: Metodología Ágil y Marco Scrum**  
 > **¿Qué significa?** Es una forma de construir software en pequeños bloques de tiempo llamados **Sprints** (de 1 a 2 semanas cada uno), entregando en cada ciclo una parte del sistema completamente terminada y probada.  
@@ -113,7 +113,7 @@ Aquí tienes la respuesta exacta ante la típica pregunta: **"¿Por qué elegist
 | **Python 3** | Lenguaje de programación base. | Sintaxis limpia, altamente legible y soporte nativo indiscutible para las principales APIs de Inteligencia Artificial. |
 | **Flask** | Microframework web para el backend. | A diferencia de *Django* (que es pesado y tiene miles de archivos innecesarios), Flask es minimalista, rápido, no impone estructuras rígidas y permite crear endpoints API en pocas líneas. |
 | **Gunicorn** | Servidor web WSGI de producción. | El servidor interno de Flask es solo para pruebas locales. Gunicorn administra múltiples procesos de trabajo (*workers*) en Linux (Render) para soportar múltiples conexiones simultáneas sin congelarse. |
-| **Google GenAI SDK (`google-genai`)** | Librería cliente de Google Gemini. | Es la versión oficial más moderna de Google. Permite inspeccionar qué modelos están activos dinámicamente (`client.models.list()`) e interactuar con Gemini 2.5 Flash y 1.5 Flash con latencia ultra baja. |
+| **Google GenAI SDK (`google-genai`)** | Librería cliente de Google Gemini. | Es la versión oficial más moderna de Google. Permite inspeccionar qué modelos están activos dinámicamente (`client.models.list()`) e interactuar con Gemini 2.5 Flash y 1.5 Flash con latencia ultra baja. Soporta **varias API Keys** (`API1`, `API2`, `API`, `GEMINI_API_KEY`) con rotación automática de cliente y modelo si una clave se satura. |
 | **Cloudflare D1** | Base de datos SQLite Serverless en la nube. | En servicios como Render, el disco duro es efímero (se borra al reiniciar). Cloudflare D1 almacena la base de datos en la nube con réplicas globales, costo cero y consultas SQL relacionales clásicas. |
 | **Requests** | Conector HTTP para Python. | Permite enviar consultas SQL en formato JSON mediante llamadas HTTP seguras (`requests.post`) hacia la API de Cloudflare sin depender de controladores pesados de base de datos. |
 | **Cloudflare Workers AI** | Motor de inferencia de IA en la nube. | Genera ilustraciones educativas bajo demanda (`@cf/black-forest-labs/flux-1-schnell` o *Stable Diffusion*) para ayudar a estudiantes visuales en temas abstractos (células, átomos, vectores). |
@@ -121,6 +121,7 @@ Aquí tienes la respuesta exacta ante la típica pregunta: **"¿Por qué elegist
 | **KaTeX 0.16.11 (CDN)** | Motor de renderizado matemático web. | Creado por Khan Academy. Es hasta 10 veces más rápido que *MathJax*. Renderiza código LaTeX (`$...$` o `$$...$$`) como fracciones, raíces y exponentes reales directamente en la pantalla del celular sin consumir datos excesivos. |
 | **HTML5, CSS3 puro y JavaScript Vanilla** | Frontend nativo sin frameworks. | **Decisión crítica de ingeniería:** No usamos *React, Angular o Vue* porque descargan paquetes de varios megabytes que agotan el plan de datos y enlentecen celulares modestos. El código nativo vuela en cualquier smartphone. |
 | **Python-Dotenv** | Gestor de variables de entorno. | Lee el archivo `.env` en local o las variables del panel de Render, protegiendo las credenciales de API para no subirlas nunca a GitHub por error. |
+| **Web Speech API (`speechSynthesis`)** | Síntesis de voz nativa del navegador. | Cero librerías y cero bytes descargados: lee en voz alta las explicaciones en español (`es-ES`). Se complementa con el backend (`/api/audio-verbalizado`) que convierte las fórmulas LaTeX a palabras habladas antes de leerlas. |
 
 > 💡 **Término Clave: WSGI (Web Server Gateway Interface)**  
 > **¿Qué significa?** Es el traductor estándar entre los servidores de internet (como Nginx o Gunicorn) y las aplicaciones hechas en Python (como Flask).  
@@ -198,14 +199,23 @@ El modelo no responde como un chatbot ordinario, sino que sigue una plantilla pe
 - Transforma código matemático como `$\frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$` en ecuaciones tipográficas perfectas.
 - Permite que las fórmulas químicas ($H_2O$, $CO_2$, $H_2SO_4$) se lean con subíndices exactos en la pantalla del celular.
 
-### 7.3 Generación Visual con Cloudflare Workers AI
-En `cloudflare_ai.py` se implementaron dos modos de apoyo visual:
-- **Modo Preciso (`POST /api/ilustrar`):** Emplea modelos Text-to-Image como `@cf/black-forest-labs/flux-1-schnell` con un prompt enriquecido para generar diagramas esquemáticos en blanco y negro con trazo grueso y fondo limpio.
-- **Modo Creativo / Esquema (`POST /api/esquema`):** Produce un esquema conceptual estructurado de texto y viñetas para resumir las ideas visualmente sin consumo excesivo de inferencia.
+### 7.3 Generación Visual con Cloudflare Workers AI (bajo demanda)
+La imagen **ya no se genera sola** al enviar la pregunta (modo solo-manual). En `cloudflare_ai.py` y el selector del frontend (`chat.html`) conviven dos rutas:
+- **Selector del estudiante:** al pulsar `🎨 Ver ilustración` aparecen dos opciones: *Imagen IA* o *Esquema texto*.
+- **Modo Preciso (`POST /api/ilustrar`):** Emplea modelos Text-to-Image como `@cf/black-forest-labs/flux-1-schnell` con un prompt enriquecido (`negative_prompt` incluido) para generar diagramas esquemáticos en blanco y negro con trazo grueso, sin letras dibujadas.
+- **Modo Creativo (`POST /api/ilustrar`):** Producción cartoon a color con 1-3 etiquetas cortas; es el default en Lenguaje. Ambos modos quedan recordados por materia en `localStorage`.
+- **Esquema texto (`POST /api/esquema`):** el backend devuelve solo las **etiquetas** (nada de inferencia pesada) y el frontend dibuja un **SVG determinista** (`dibujarEsquemaSVG`): un nodo central conectado a sus hojas con letras reales legibles, 100% sin IA generativa.
 
 ### 7.4 Detección Dinámica de Modelos y Mecanismo Fallback
 - **Problema:** En el desarrollo de software con IA, las APIs actualizan y deprecian nombres de modelos frecuentemente (provocando errores `404 NOT_FOUND`).
 - **Nuestra Solución:** `gemini_helper.py` consulta en tiempo real `client.models.list()`. Si un modelo se satura, el código salta automáticamente al siguiente (`gemini-2.5-flash` $\rightarrow$ `gemini-1.5-flash` $\rightarrow$ `gemini-1.5-pro`) sin interrumpir la sesión del estudiante.
+- **Respaldo adicional:** además de los modelos, `_generar_con_modelos()` rota las **API Keys** configuradas (`API1`, `API2`, `API`, `GEMINI_API_KEY`); si el modo JSON (`response_mime_type`) no lo soporta un modelo, reintenta sin él.
+
+### 7.5 Accesibilidad Auditiva: Lectura en Voz Alta de las Explicaciones
+- **Toggle global:** botón `🔊 Voz` en la barra superior del chat; guarda su estado en `localStorage` (`lectura_voz_activa`) y, si está activo, cada respuesta nueva se lee sola.
+- **Botón por burbuja:** `🔊 Escuchar` en cada mensaje (y `⏹ Detener` durante la reproducción), con anulación inmediata de cualquier audio anterior.
+- **Backend (`POST /api/audio-verbalizado`):** `gemini_helper.verbalizar_para_audio()` pide a Gemini reescribir el mensaje como texto de locución en español ("raíz cuadrada de cuatro", "tres cuartos", "metros por segundo al cuadrado"), eliminando Markdown, `$`, HTML y símbolos.
+- **Fallbacks en cascada:** si Gemini falla, se usan `limpiar_formulas_reglas()` (regex del servidor) y `verbalizarReglasCliente()` (regex del navegador); la síntesis final la hace `speechSynthesis` con voz española y velocidad 0.95.
 
 ---
 
@@ -213,14 +223,16 @@ En `cloudflare_ai.py` se implementaron dos modos de apoyo visual:
 
 Si el docente pregunta sobre la ética y la seguridad del sistema:
 
-1. **Seguridad Criptográfica (RNF-05):** Las contraseñas se almacenan mediante `generate_password_hash` con algoritmo `scrypt` o `pbkdf2` con sal aleatoria. Las sesiones de Flask se firman mediante cookies encriptadas con `SECRET_KEY`.
-2. **Aislamiento Multiusuario:** Las consultas SQL aplican aislamiento estricto:
+1. **Seguridad Criptográfica (RNF-05):** Las contraseñas se almacenan mediante `generate_password_hash` con algoritmo `scrypt` o `pbkdf2` con sal aleatoria. Las sesiones de Flask se firman mediante cookies encriptadas con `SECRET_KEY`. Cuentas antiguas guardadas en texto plano se **migran automáticamente al hash** la próxima vez que el usuario inicia sesión.
+2. **Validación de Entrada:** el registro exige nombre, contraseña y correo terminado en `@gmail.com`; los campos vacíos, los correos duplicados (restricción `UNIQUE`) y las materias ajenas devuelven error (`400`/`403`) sin tocar la base de datos.
+3. **Aislamiento Multiusuario y por Materia:** las consultas SQL aplican aislamiento estricto:
    ```sql
    WHERE usuario_id = ? AND materia_id = ?
    ```
-   Un estudiante jamás puede ver los mensajes, preguntas o ejercicios de otro.
-3. **Disclaimer Ético de Inteligencia Artificial (Apartado 8.7.6 del Informe):**  
-   En la interfaz del dashboard y del chat se incluye un aviso transparente informando que EduAsistente es una **herramienta de apoyo pedagógico** y que el estudiante debe contrastar siempre sus dudas con sus libros oficiales o con su profesor del colegio, fomentando el pensamiento crítico y el uso responsable de la IA.
+   y antes de operar, `db.materia_visible_para(materia_id, usuario_id)` verifica que la materia sea base o privada del usuario en `/api/chat`, `/api/historial` y `/api/ejercicio`. Un estudiante jamás puede ver los mensajes, preguntas o ejercicios de otro, ni entrar a la materia privada de otro.
+4. **Límites Anti-abuso:** el historial enviado a la IA se recorta (`_limpiar_historial`: 6 mensajes / 600 caracteres, sin `base64` ni HTML), las respuestas de Gemini acotan `max_output_tokens` y una imagen de más de 700 KB se descarta para no tumbar el worker de Render.
+5. **Disclaimer Ético de Inteligencia Artificial (Apartado 8.7.6 del Informe):**  
+   En la interfaz del dashboard y del chat se incluye un aviso transparente informando que EduAsistente es una **herramienta de apoyo pedagógico** y que el estudiante debe contrastar siempre sus dudas con sus libros oficiales o con su profesor del colegio, fomentando el pensamiento crítico y el uso responsable de la IA. Cada respuesta y cada imagen traen su campo `advertencia`.
 
 ---
 
@@ -237,9 +249,10 @@ Si el docente pregunta sobre la ética y la seguridad del sistema:
 | `POST` | `/api/chat` | Sprint 2 | Procesa la duda del alumno, consulta D1 y responde con Gemini. |
 | `GET` | `/api/historial` | Sprint 2 | Recupera el historial de chat por usuario y materia. |
 | `GET/PUT`| `/api/perfil` | Sprint 2 | Consulta o actualiza el estilo de aprendizaje (RF-12). |
-| `POST` | `/api/ilustrar` | Sprint 2 | Genera diagrama visual con Cloudflare Workers AI. |
-| `POST` | `/api/esquema` | Sprint 2 | Genera esquema conceptual en texto estructurado. |
-| `POST` | `/api/ejercicio` | Sprint 3 | Genera un ejercicio práctico adaptado al tema (RF-08). |
+| `POST` | `/api/ilustrar` | Sprint 2 | Re-analiza la respuesta y genera el diagrama con Cloudflare Workers AI (modo Preciso/Creativo). |
+| `POST` | `/api/esquema` | Sprint 2 | Devuelve las etiquetas del esquema para que el frontend dibuje un SVG determinista (sin IA generativa). |
+| `POST` | `/api/audio-verbalizado` | Soporte | Convierte la explicación (fórmulas LaTeX incluidas) a texto de locución en español para leerla en voz alta. |
+| `POST` | `/api/ejercicio` | Sprint 3 | Genera un ejercicio práctico adaptado al tema (RF-08) y lo persiste en el historial. |
 | `POST` | `/api/revisar` | Sprint 3 | Evalúa la solución, da feedback y actualiza aciertos (RF-09/10/13). |
 | `GET` | `/api/modelos` | Soporte | Monitorea qué modelos de Gemini están activos en la cuenta. |
 

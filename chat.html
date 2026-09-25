@@ -441,6 +441,10 @@
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
       }
+      if (typeof idIntervaloKeepAlive !== 'undefined' && idIntervaloKeepAlive) {
+        clearInterval(idIntervaloKeepAlive);
+        idIntervaloKeepAlive = null;
+      }
       if (audioEnReproduccion) {
         try {
           audioEnReproduccion.pause();
@@ -514,7 +518,10 @@
       return t;
     }
 
-    // Sintetizar voz en el navegador con voz en español seleccionada
+    // Sintetizar voz en el navegador dividiendo en oraciones para evitar que
+    // Chrome / navegadores móviles corten el audio a los 15 segundos o en textos largos.
+    let idIntervaloKeepAlive = null;
+
     function hablarTextoFonético(textoHablar, onFin) {
       if (!('speechSynthesis' in window)) {
         if (onFin) onFin();
@@ -522,21 +529,93 @@
       }
 
       window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(textoHablar);
-      utterance.lang = 'es-ES';
-      utterance.rate = 0.95; // Un poco más pausado para mayor claridad didáctica
-      utterance.pitch = 1.0;
+      if (idIntervaloKeepAlive) {
+        clearInterval(idIntervaloKeepAlive);
+        idIntervaloKeepAlive = null;
+      }
 
-      // Buscar voz nativa en español
-      const voces = window.speechSynthesis.getVoices();
+      const textoLimpio = String(textoHablar || '').trim();
+      if (!textoLimpio) {
+        if (onFin) onFin();
+        return;
+      }
+
+      // Dividir el texto en fragmentos naturales (puntos, signos de interrogación o comas si es muy largo)
+      const partesCrudas = textoLimpio.match(/[^.!?\n]+[.!?\n]+/g) || [textoLimpio];
+      const fragmentos = [];
+
+      for (let p of partesCrudas) {
+        p = p.trim();
+        if (!p) continue;
+        // Si una sola oración excede los 200 caracteres, dividir por comas o pausas
+        if (p.length > 200) {
+          const subPartes = p.match(/[^,;]+[,;]?/g) || [p];
+          for (let sp of subPartes) {
+            sp = sp.trim();
+            if (sp) fragmentos.push(sp);
+          }
+        } else {
+          fragmentos.push(p);
+        }
+      }
+
+      if (fragmentos.length === 0) {
+        if (onFin) onFin();
+        return;
+      }
+
+      // Buscar la mejor voz en español
+      const voces = window.speechSynthesis.getVoices() || [];
       const vozEs = voces.find(v => v.lang.startsWith('es') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Microsoft') || v.name.includes('Paulina') || v.name.includes('Monica') || v.name.includes('Jorge'))) 
                  || voces.find(v => v.lang.startsWith('es'));
-      if (vozEs) utterance.voice = vozEs;
 
-      utterance.onend = () => { if (onFin) onFin(); };
-      utterance.onerror = () => { if (onFin) onFin(); };
+      let indiceActual = 0;
 
-      window.speechSynthesis.speak(utterance);
+      // Bug clásico de Chromium en móviles: si el audio dura más de 15 segundos se pausa solo.
+      // Se previene con un keep-alive de pause/resume cada 10 segundos.
+      idIntervaloKeepAlive = setInterval(() => {
+        if (window.speechSynthesis.speaking) {
+          window.speechSynthesis.pause();
+          window.speechSynthesis.resume();
+        } else {
+          clearInterval(idIntervaloKeepAlive);
+          idIntervaloKeepAlive = null;
+        }
+      }, 10000);
+
+      function reproducirSiguiente() {
+        // Si el usuario canceló la voz o se llegó al final
+        if (!botonAudioActivo || indiceActual >= fragmentos.length) {
+          if (idIntervaloKeepAlive) {
+            clearInterval(idIntervaloKeepAlive);
+            idIntervaloKeepAlive = null;
+          }
+          if (onFin) onFin();
+          return;
+        }
+
+        const fragmentoTexto = fragmentos[indiceActual];
+        indiceActual++;
+
+        const utterance = new SpeechSynthesisUtterance(fragmentoTexto);
+        utterance.lang = 'es-ES';
+        utterance.rate = 0.95;
+        utterance.pitch = 1.0;
+        if (vozEs) utterance.voice = vozEs;
+
+        utterance.onend = () => {
+          reproducirSiguiente();
+        };
+
+        utterance.onerror = (e) => {
+          console.log('Aviso síntesis voz:', e);
+          reproducirSiguiente();
+        };
+
+        window.speechSynthesis.speak(utterance);
+      }
+
+      reproducirSiguiente();
     }
 
     // Función principal para reproducir el audio de una burbuja

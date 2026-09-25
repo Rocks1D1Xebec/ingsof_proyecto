@@ -578,7 +578,7 @@ def verbalizar_para_audio(texto: str, materia: str = "General") -> str:
     if not texto:
         return ""
 
-    limpio_inicial = str(texto).replace("```", "").strip()[:2500]
+    limpio_inicial = str(texto).replace("```", "").strip()[:8000]
     
     prompt = (
         f"Materia: {materia}.\n"
@@ -589,16 +589,16 @@ def verbalizar_para_audio(texto: str, materia: str = "General") -> str:
         "(ejemplo: √4 = 2 dilo como 'raíz cuadrada de cuatro es igual a dos'; 3/4 dilo como 'tres cuartos' o 'tres sobre cuatro'; "
         "x^2 dilo como 'equis al cuadrado'; 9.8 m/s² dilo como 'nueve coma ocho metros por segundo al cuadrado').\n"
         "2. Elimina símbolos de código, Markdown, asteriscos, signos de dólar ($), corchetes y formatos visuales.\n"
-        "3. Mantén las explicaciones intactas con tono cálido, claro y docente.\n"
+        "3. Mantén la explicación completa sin recortar ni resumir nada, con tono cálido, claro y docente.\n"
         "4. Devuelve ÚNICAMENTE el texto verbalizado listo para hablar, sin introducciones ni notas."
     )
 
     try:
         resultado = _generar_con_modelos(
             contents=prompt,
-            system_instruction="Eres un profesor locutor de secundaria. Escribes exclusivamente texto fonético y natural para ser leído en voz alta.",
+            system_instruction="Eres un profesor locutor de secundaria. Escribes exclusivamente texto fonético y natural para ser leído en voz alta sin recortar la explicación.",
             temperature=0.2,
-            max_tokens=1000
+            max_tokens=3000
         ).strip()
         if resultado and len(resultado) > 10:
             return resultado
