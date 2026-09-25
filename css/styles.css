@@ -92,31 +92,35 @@ input {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
+  padding: 12px 16px;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
   position: sticky;
   top: 0;
   z-index: 100;
+  gap: 8px;
 }
 
 .navbar__brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  min-width: 0;
+  flex-shrink: 0;
 }
 
 .navbar__logo {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   background: var(--accent-blue);
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: 18px;
   color: white;
   position: relative;
+  flex-shrink: 0;
 }
 
 .navbar__logo::after {
@@ -131,9 +135,10 @@ input {
 }
 
 .navbar__title {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: var(--text-primary);
+  white-space: nowrap;
 }
 
 .navbar__subtitle {
@@ -145,28 +150,38 @@ input {
 .navbar__actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  min-width: 0;
+  justify-content: flex-end;
 }
 
 .navbar__user {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 600;
   color: var(--text-primary);
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
 }
 
 .navbar__logout {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 0.8rem;
+  gap: 3px;
+  font-size: 0.78rem;
   color: var(--text-secondary);
   background: none;
   transition: color 0.2s;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .navbar__logout:hover {
   color: var(--accent-red);
 }
+
 
 /* ===== HERO SECTION (Auth pages) ===== */
 .hero {
@@ -937,18 +952,20 @@ input {
 .navbar__audio-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   background: var(--bg-card);
   color: var(--text-secondary);
   border: 1px solid var(--border-color);
-  padding: 6px 12px;
+  padding: 4px 8px;
   border-radius: var(--radius-full);
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
+  flex-shrink: 0;
 }
+
 
 .navbar__audio-btn:hover {
   border-color: var(--accent-blue);

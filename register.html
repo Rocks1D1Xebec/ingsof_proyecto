@@ -117,11 +117,16 @@
       if (prevError) prevError.remove();
 
       const nombre = document.getElementById('input-name').value.trim();
-      const email = document.getElementById('input-email').value.trim();
+      const email = document.getElementById('input-email').value.trim().toLowerCase();
       const contrasena = passwordInput.value.trim();
 
       if (!nombre || !email || !contrasena) {
         mostrarError('Por favor, completa todos los campos');
+        return;
+      }
+
+      if (!email.endsWith('@gmail.com')) {
+        mostrarError('El correo debe terminar en @gmail.com');
         return;
       }
 

@@ -70,6 +70,9 @@ def api_register():
     if not nombre or not email or not contrasena:
         return jsonify({"ok": False, "error": "Por favor completa todos los campos"}), 400
 
+    if not email.endswith("@gmail.com"):
+        return jsonify({"ok": False, "error": "El correo debe terminar en @gmail.com"}), 400
+
     # Verificar si el correo ya existe
     existente = db.buscar_usuario_por_email(email)
     if existente:

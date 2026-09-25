@@ -97,7 +97,7 @@
       </div>
       <div class="navbar__actions">
         <button class="navbar__audio-btn" id="btn-toggle-voz" type="button" title="Activar o desactivar lectura en voz alta">
-          🔊 <span id="lbl-toggle-voz">Voz: Desactivada</span>
+          🔊 <span id="lbl-toggle-voz">Voz</span>
         </button>
         <span class="navbar__user" id="navbar-user">Cargando...</span>
         <button class="navbar__logout" id="btn-logout" aria-label="Cerrar sesión">
@@ -428,10 +428,10 @@
       if (!btnToggleVoz || !lblToggleVoz) return;
       if (vozActiva) {
         btnToggleVoz.classList.add('active');
-        lblToggleVoz.textContent = 'Voz: Activada';
+        lblToggleVoz.textContent = 'Voz: Sí';
       } else {
         btnToggleVoz.classList.remove('active');
-        lblToggleVoz.textContent = 'Voz: Desactivada';
+        lblToggleVoz.textContent = 'Voz: No';
       }
     }
     actualizarBotonToggleVoz();

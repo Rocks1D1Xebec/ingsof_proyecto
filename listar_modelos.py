@@ -17,9 +17,9 @@ load_dotenv()
 
 def obtener_modelos_disponibles():
     """Consulta la API de Gemini y retorna una lista de modelos compatibles con generateContent."""
-    api_key = os.getenv("API") or os.getenv("GEMINI_API_KEY")
+    api_key = os.getenv("API1") or os.getenv("API2") or os.getenv("API") or os.getenv("GEMINI_API_KEY")
     if not api_key:
-        print("❌ Error: No se encontró la variable 'API' o 'GEMINI_API_KEY' en el archivo .env o en el entorno.")
+        print("❌ Error: No se encontró la variable 'API1', 'API2' ni 'API' en el archivo .env o en el entorno.")
         return []
 
     try:

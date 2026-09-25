@@ -19,38 +19,70 @@ load_dotenv()
 _MODELOS_DISPONIBLES_CACHE = []
 
 
+def obtener_api_keys() -> list[str]:
+    """Obtiene la lista de API keys configuradas (API1, API2, API, GEMINI_API_KEY)."""
+    claves = []
+    # Prioridad: API1, API2, API, GEMINI_API_KEY
+    for var in ["API1", "API2", "API", "GEMINI_API_KEY"]:
+        val = (os.getenv(var) or "").strip()
+        if val and val not in claves:
+            claves.append(val)
+    return claves
+
+
+def obtener_clientes() -> list[genai.Client]:
+    """Crea una lista de clientes genai.Client para cada API Key configurada."""
+    keys = obtener_api_keys()
+    clientes = []
+    for k in keys:
+        try:
+            clientes.append(genai.Client(api_key=k))
+        except Exception:
+            pass
+    return clientes
+
+
 def obtener_cliente():
-    """Obtiene el cliente de Gemini."""
-    api_key = os.getenv("API") or os.getenv("GEMINI_API_KEY")
-    return genai.Client(api_key=api_key)
+    """Obtiene el cliente primario de Gemini (API1 o primera disponible)."""
+    clientes = obtener_clientes()
+    if clientes:
+        return clientes[0]
+    try:
+        return genai.Client()
+    except Exception:
+        return None
+
 
 
 def obtener_lista_modelos_activos() -> list[str]:
-    """Descubre dinámicamente los modelos que realmente están activos en tu API Key."""
+    """Descubre dinámicamente los modelos que realmente están activos probando tus API Keys."""
     global _MODELOS_DISPONIBLES_CACHE
     if _MODELOS_DISPONIBLES_CACHE:
         return _MODELOS_DISPONIBLES_CACHE
 
-    try:
-        client = obtener_cliente()
-        modelos = []
-        for m in client.models.list():
-            nombre = (m.name or "").replace("models/", "")
-            # Filtrar modelos de texto/chat (descartar embeddings o imagen pura como imagen-3 o text-embedding)
-            if "embedding" not in nombre and "imagen" not in nombre and "aqa" not in nombre:
-                modelos.append(nombre)
+    clientes = obtener_clientes()
+    for client in clientes:
+        try:
+            modelos = []
+            for m in client.models.list():
+                nombre = (m.name or "").replace("models/", "")
+                # Filtrar modelos de texto/chat (descartar embeddings o imagen pura como imagen-3 o text-embedding)
+                if "embedding" not in nombre and "imagen" not in nombre and "aqa" not in nombre:
+                    modelos.append(nombre)
 
-        # Ordenar priorizando modelos flash rápidos si existen
-        modelos.sort(key=lambda x: (0 if "flash" in x else 1, 0 if "2" in x or "3" in x else 1))
+            # Ordenar priorizando modelos flash rápidos si existen
+            modelos.sort(key=lambda x: (0 if "flash" in x else 1, 0 if "2" in x or "3" in x else 1))
 
-        if modelos:
-            _MODELOS_DISPONIBLES_CACHE = modelos
-            return _MODELOS_DISPONIBLES_CACHE
-    except Exception as err:
-        print("Aviso al consultar modelos dinámicos:", err)
+            if modelos:
+                _MODELOS_DISPONIBLES_CACHE = modelos
+                return _MODELOS_DISPONIBLES_CACHE
+        except Exception as err:
+            print("Aviso al consultar modelos dinámicos con una API key:", err)
+            continue
 
     # Lista de respaldo por si falla la llamada de listado
     return ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-exp"]
+
 
 
 # ─── Prompts del sistema ────────────────────────────────────────
@@ -114,13 +146,13 @@ def _obtener_contexto_materia(materia: str) -> str:
 
 def _generar_con_modelos(contents, system_instruction: str, temperature: float = 0.7,
                           max_tokens: int = 1200, json_mode: bool = False) -> str:
-    """Intenta generar contenido probando con los modelos descubiertos en tu cuenta.
+    """Intenta generar contenido probando con las API keys (API1, API2) y modelos descubiertos.
 
     `max_tokens` acota la respuesta: más rápido, menos memoria en Render free
     y mejor para leer en celular.
     `json_mode=True` pide a Gemini `application/json` para no recibir Markdown.
     """
-    client = obtener_cliente()
+    clientes = obtener_clientes()
     modelos_a_probar = obtener_lista_modelos_activos()
     ultimo_error = None
 
@@ -128,30 +160,32 @@ def _generar_con_modelos(contents, system_instruction: str, temperature: float =
     # response_mime_type), se reintenta sin esa opción.
     intentos_cfg = [True, False] if json_mode else [False]
     for usar_json in intentos_cfg:
-        for modelo in modelos_a_probar:
-            try:
-                cfg = {
-                    "system_instruction": system_instruction,
-                    "temperature": temperature,
-                    "max_output_tokens": max_tokens,
-                }
-                if usar_json:
-                    cfg["response_mime_type"] = "application/json"
-                response = client.models.generate_content(
-                    model=modelo,
-                    contents=contents,
-                    config=cfg,
-                )
-                if response and response.text:
-                    return response.text
-            except Exception as e:
-                ultimo_error = e
-                continue
+        for client in clientes:
+            for modelo in modelos_a_probar:
+                try:
+                    cfg = {
+                        "system_instruction": system_instruction,
+                        "temperature": temperature,
+                        "max_output_tokens": max_tokens,
+                    }
+                    if usar_json:
+                        cfg["response_mime_type"] = "application/json"
+                    response = client.models.generate_content(
+                        model=modelo,
+                        contents=contents,
+                        config=cfg,
+                    )
+                    if response and response.text:
+                        return response.text
+                except Exception as e:
+                    ultimo_error = e
+                    continue
         # Si ya probamos sin JSON, no hay más que intentar
         if not usar_json:
             break
 
     raise Exception(f"Error con los modelos {modelos_a_probar}: {ultimo_error}")
+
 
 
 def _extraer_json(texto: str) -> dict:
