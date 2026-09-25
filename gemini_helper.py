@@ -476,3 +476,100 @@ def generar_prompt_imagen(pregunta: str, respuesta: str, materia: str = "",
         base = f"educational {'line diagram, no text' if modo == 'preciso' else 'cartoon illustration'} about {preg[:120]}"
         return {"prompt_en": base, "etiquetas": [],
                 "estilo": "lineal" if modo == "preciso" else "ilustrativo"}
+
+
+# ─── Verbalización y Audio para Accesibilidad (Lectura Natural de Fórmulas) ───
+def limpiar_formulas_reglas(texto: str) -> str:
+    """Transformación determinista de símbolos comunes a español hablado."""
+    import re
+    t = str(texto or "")
+    # Quitar imágenes y data urls
+    t = re.sub(r"data:image/[^;]+;base64,[A-Za-z0-9+/=]+", " ", t)
+    t = re.sub(r"<[^>]+>", " ", t)
+    t = re.sub(r"!\[.*?\]\(.*?\)", " ", t)
+    
+    # Reemplazos de notaciones matemáticas comunes
+    t = re.sub(r"\\sqrt\[(\d+)\]\{([^}]+)\}", r"raíz \1-ésima de \2", t)
+    t = re.sub(r"\\sqrt\{([^}]+)\}", r"raíz cuadrada de \1", t)
+    t = re.sub(r"\\frac\{([^}]+)\}\{([^}]+)\}", r"\1 sobre \2", t)
+    t = re.sub(r"([A-Za-z0-9_]+)\^2", r"\1 al cuadrado", t)
+    t = re.sub(r"([A-Za-z0-9_]+)\^3", r"\1 al cubo", t)
+    t = re.sub(r"([A-Za-z0-9_]+)\^\{([^}]+)\}", r"\1 elevado a la \2", t)
+    t = re.sub(r"([A-Za-z0-9_]+)\^(\d+)", r"\1 elevado a la \2", t)
+    t = re.sub(r"\\times|\\cdot", " por ", t)
+    t = re.sub(r"\\pm", " más o menos ", t)
+    t = re.sub(r"\\le|\\leq", " menor o igual que ", t)
+    t = re.sub(r"\\ge|\\geq", " mayor o igual que ", t)
+    t = re.sub(r"\\neq", " no es igual a ", t)
+    t = re.sub(r"\\approx", " aproximadamente ", t)
+    t = re.sub(r"\\pi", " pi ", t)
+    t = re.sub(r"\\alpha", " alfa ", t)
+    t = re.sub(r"\\beta", " beta ", t)
+    t = re.sub(r"\\theta", " zeta ", t)
+    t = re.sub(r"\\Delta", " delta ", t)
+    t = re.sub(r"\\vec\{([^}]+)\}", r"vector \1", t)
+    t = re.sub(r"\b(\d+)\s*/\s*(\d+)\b", r"\1 sobre \2", t)
+    
+    # Unidades y química
+    t = re.sub(r"m/s\^2", "metros por segundo al cuadrado", t)
+    t = re.sub(r"m/s\b", "metros por segundo", t)
+    t = re.sub(r"km/h\b", "kilómetros por hora", t)
+    t = re.sub(r"\$H_2O\$|H_2O\b", "H dos O (agua)", t)
+    t = re.sub(r"\$CO_2\$|CO_2\b", "C O dos (dióxido de carbono)", t)
+    
+    # Signos matemáticos
+    t = t.replace("$", " ")
+    t = t.replace("=", " es igual a ")
+    t = t.replace("+", " más ")
+    t = t.replace("-", " menos ")
+    t = t.replace("±", " más o menos ")
+    t = t.replace("×", " por ")
+    t = t.replace("÷", " entre ")
+    t = t.replace("√", " raíz cuadrada de ")
+    t = t.replace("²", " al cuadrado ")
+    t = t.replace("³", " al cubo ")
+    
+    # Markdown
+    t = re.sub(r"[#*`_~]", " ", t)
+    t = re.sub(r"\s+", " ", t).strip()
+    return t
+
+
+def verbalizar_para_audio(texto: str, materia: str = "General") -> str:
+    """Convierte el mensaje a texto fluido en español para ser leído por voz humana con Gemini.
+
+    Convierte fórmulas LaTeX, KaTeX, fracciones y símbolos a palabras naturales.
+    Si Gemini no está disponible o falla, utiliza reglas deterministas regex.
+    """
+    if not texto:
+        return ""
+
+    limpio_inicial = str(texto).replace("```", "").strip()[:2500]
+    
+    prompt = (
+        f"Materia: {materia}.\n"
+        f"Adapta este texto de una clase para ser leído en voz alta por un profesor virtual de secundaria:\n\n"
+        f'"{limpio_inicial}"\n\n'
+        "INSTRUCCIONES CLAVE:\n"
+        "1. Transforma TODAS las fórmulas matemáticas, físicas o químicas a palabras habladas fluidas en español "
+        "(ejemplo: √4 = 2 dilo como 'raíz cuadrada de cuatro es igual a dos'; 3/4 dilo como 'tres cuartos' o 'tres sobre cuatro'; "
+        "x^2 dilo como 'equis al cuadrado'; 9.8 m/s² dilo como 'nueve coma ocho metros por segundo al cuadrado').\n"
+        "2. Elimina símbolos de código, Markdown, asteriscos, signos de dólar ($), corchetes y formatos visuales.\n"
+        "3. Mantén las explicaciones intactas con tono cálido, claro y docente.\n"
+        "4. Devuelve ÚNICAMENTE el texto verbalizado listo para hablar, sin introducciones ni notas."
+    )
+
+    try:
+        resultado = _generar_con_modelos(
+            contents=prompt,
+            system_instruction="Eres un profesor locutor de secundaria. Escribes exclusivamente texto fonético y natural para ser leído en voz alta.",
+            temperature=0.2,
+            max_tokens=1000
+        ).strip()
+        if resultado and len(resultado) > 10:
+            return resultado
+    except Exception as e:
+        print("Aviso verbalizar_para_audio con IA (usando reglas):", e)
+
+    return limpiar_formulas_reglas(limpio_inicial)
+

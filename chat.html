@@ -96,6 +96,9 @@
         </div>
       </div>
       <div class="navbar__actions">
+        <button class="navbar__audio-btn" id="btn-toggle-voz" type="button" title="Activar o desactivar lectura en voz alta">
+          🔊 <span id="lbl-toggle-voz">Voz: Desactivada</span>
+        </button>
         <span class="navbar__user" id="navbar-user">Cargando...</span>
         <button class="navbar__logout" id="btn-logout" aria-label="Cerrar sesión">
           ↪ Salir
@@ -128,6 +131,10 @@
         </div>
         <div class="chat-message__bubble" id="welcome-bubble">
           ¡Hola! Soy tu asistente de estudio. Escríbeme cualquier duda o ejercicio que no entiendas y lo resolveremos juntos paso a paso.
+        </div>
+        <div class="chat-message__actions">
+          <button class="chat-action-btn btn-audio-msg" onclick="reproducirAudioMensaje(this)" aria-label="Escuchar bienvenida en voz alta">🔊 Escuchar</button>
+          <button class="chat-action-btn" onclick="copiarMensaje(this)" aria-label="Copiar">📋 Copiar</button>
         </div>
       </div>
     </div>
@@ -308,6 +315,7 @@
         </div>
         <div class="chat-message__bubble">${formatearMarkdown(contenidoHTML)}${imgBlock}</div>
         <div class="chat-message__actions">
+          <button class="chat-action-btn btn-audio-msg" onclick="reproducirAudioMensaje(this)" aria-label="Escuchar explicación en voz alta">🔊 Escuchar</button>
           <button class="chat-action-btn" onclick="copiarMensaje(this)" aria-label="Copiar">📋 Copiar</button>
           <button class="chat-action-btn" onclick="practicarTema(this)" aria-label="Practicar este tema">🎯 Practicar este tema</button>
           <button class="chat-action-btn" onclick="ilustrarMensaje(this)" aria-label="Ver ilustración">🎨 Ver ilustración</button>
@@ -405,6 +413,203 @@
         setTimeout(() => btn.textContent = original, 1500);
       }
     };
+
+    // =========================================================================
+    // SISTEMA DE AUDIO Y LECTURA EN VOZ ALTA (Verbalización de Fórmulas)
+    // =========================================================================
+    let vozActiva = localStorage.getItem('lectura_voz_activa') === 'true';
+    let botonAudioActivo = null;
+    let audioEnReproduccion = null; // Para Audio HTML5 si se usa audio buffer
+
+    const btnToggleVoz = document.getElementById('btn-toggle-voz');
+    const lblToggleVoz = document.getElementById('lbl-toggle-voz');
+
+    function actualizarBotonToggleVoz() {
+      if (!btnToggleVoz || !lblToggleVoz) return;
+      if (vozActiva) {
+        btnToggleVoz.classList.add('active');
+        lblToggleVoz.textContent = 'Voz: Activada';
+      } else {
+        btnToggleVoz.classList.remove('active');
+        lblToggleVoz.textContent = 'Voz: Desactivada';
+      }
+    }
+    actualizarBotonToggleVoz();
+
+    // Detener cualquier audio o síntesis de voz en curso inmediatamente
+    function detenerAudioGlobal() {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      if (audioEnReproduccion) {
+        try {
+          audioEnReproduccion.pause();
+          audioEnReproduccion.currentTime = 0;
+        } catch (e) {}
+        audioEnReproduccion = null;
+      }
+      if (botonAudioActivo) {
+        botonAudioActivo.innerHTML = '🔊 Escuchar';
+        botonAudioActivo.classList.remove('is-playing');
+        botonAudioActivo = null;
+      }
+    }
+
+    // Al pulsar el toggle de activar/desactivar voz
+    if (btnToggleVoz) {
+      btnToggleVoz.addEventListener('click', () => {
+        vozActiva = !vozActiva;
+        localStorage.setItem('lectura_voz_activa', vozActiva ? 'true' : 'false');
+        actualizarBotonToggleVoz();
+        // Si justo se desactiva y había audio sonando, cortarlo al instante
+        if (!vozActiva) {
+          detenerAudioGlobal();
+        }
+      });
+    }
+
+    // Reglas fonéticas en cliente como fallback inmediato sin latencia
+    function verbalizarReglasCliente(texto) {
+      let t = String(texto || '')
+        .replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]+/g, ' ')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/!\[.*?\]\(.*?\)/g, ' ');
+
+      // Fórmulas matemáticas
+      t = t.replace(/\\sqrt\[(\d+)\]\{([^}]+)\}/g, 'raíz $1-ésima de $2')
+           .replace(/\\sqrt\{([^}]+)\}/g, 'raíz cuadrada de $1')
+           .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '$1 sobre $2')
+           .replace(/([A-Za-z0-9_]+)\^2/g, '$1 al cuadrado')
+           .replace(/([A-Za-z0-9_]+)\^3/g, '$1 al cubo')
+           .replace(/([A-Za-z0-9_]+)\^\{([^}]+)\}/g, '$1 elevado a la $2')
+           .replace(/([A-Za-z0-9_]+)\^(\d+)/g, '$1 elevado a la $2')
+           .replace(/\\times|\\cdot/g, ' por ')
+           .replace(/\\pm/g, ' más o menos ')
+           .replace(/\\le|\\leq/g, ' menor o igual que ')
+           .replace(/\\ge|\\geq/g, ' mayor o igual que ')
+           .replace(/\\neq/g, ' no es igual a ')
+           .replace(/\\approx/g, ' aproximadamente ')
+           .replace(/\\pi/g, ' pi ')
+           .replace(/\\Delta/g, ' delta ')
+           .replace(/\\vec\{([^}]+)\}/g, 'vector $1')
+           .replace(/\b(\d+)\s*\/\s*(\d+)\b/g, '$1 sobre $2')
+           .replace(/m\/s\^2/g, 'metros por segundo al cuadrado')
+           .replace(/m\/s\b/g, 'metros por segundo')
+           .replace(/km\/h\b/g, 'kilómetros por hora')
+           .replace(/\$H_2O\$|H_2O\b/g, 'H dos O, agua')
+           .replace(/\$CO_2\$|CO_2\b/g, 'C O dos, dióxido de carbono')
+           .replace(/\$/g, ' ')
+           .replace(/=/g, ' es igual a ')
+           .replace(/\+/g, ' más ')
+           .replace(/-/g, ' menos ')
+           .replace(/±/g, ' más o menos ')
+           .replace(/×/g, ' por ')
+           .replace(/÷/g, ' entre ')
+           .replace(/√/g, ' raíz cuadrada de ')
+           .replace(/²/g, ' al cuadrado ')
+           .replace(/³/g, ' al cubo ')
+           .replace(/[#*`_~]/g, ' ')
+           .replace(/\s+/g, ' ')
+           .trim();
+      return t;
+    }
+
+    // Sintetizar voz en el navegador con voz en español seleccionada
+    function hablarTextoFonético(textoHablar, onFin) {
+      if (!('speechSynthesis' in window)) {
+        if (onFin) onFin();
+        return;
+      }
+
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(textoHablar);
+      utterance.lang = 'es-ES';
+      utterance.rate = 0.95; // Un poco más pausado para mayor claridad didáctica
+      utterance.pitch = 1.0;
+
+      // Buscar voz nativa en español
+      const voces = window.speechSynthesis.getVoices();
+      const vozEs = voces.find(v => v.lang.startsWith('es') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Microsoft') || v.name.includes('Paulina') || v.name.includes('Monica') || v.name.includes('Jorge'))) 
+                 || voces.find(v => v.lang.startsWith('es'));
+      if (vozEs) utterance.voice = vozEs;
+
+      utterance.onend = () => { if (onFin) onFin(); };
+      utterance.onerror = () => { if (onFin) onFin(); };
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // Función principal para reproducir el audio de una burbuja
+    window.reproducirAudioMensaje = async function(btn) {
+      const card = btn.closest('.chat-message');
+      const bubble = card ? card.querySelector('.chat-message__bubble') : null;
+      if (!bubble) return;
+
+      // Si ya se está reproduciendo este mismo botón, al hacer clic se detiene
+      if (botonAudioActivo === btn) {
+        detenerAudioGlobal();
+        return;
+      }
+
+      // Detener cualquier audio previo
+      detenerAudioGlobal();
+
+      botonAudioActivo = btn;
+      btn.innerHTML = '⏳ Preparando voz...';
+      btn.classList.add('is-playing');
+
+      const textoOriginal = bubble.textContent.trim();
+
+      try {
+        // Pedir verbalización de fórmulas por IA al backend
+        const res = await fetch('/api/audio-verbalizado', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            texto: textoOriginal,
+            materia_nombre: materiaNombre
+          })
+        });
+
+        // Si el usuario canceló la voz mientras cargaba la petición, no reproducir
+        if (botonAudioActivo !== btn) return;
+
+        let textoFinal = '';
+        if (res.ok) {
+          const data = await res.json();
+          if (data.ok && data.texto_hablado) {
+            textoFinal = data.texto_hablado;
+          }
+        }
+
+        if (!textoFinal) {
+          textoFinal = verbalizarReglasCliente(textoOriginal);
+        }
+
+        btn.innerHTML = '⏹ Detener';
+
+        hablarTextoFonético(textoFinal, () => {
+          if (botonAudioActivo === btn) {
+            btn.innerHTML = '🔊 Escuchar';
+            btn.classList.remove('is-playing');
+            botonAudioActivo = null;
+          }
+        });
+
+      } catch (err) {
+        // Fallback inmediato con reglas en frontend
+        if (botonAudioActivo === btn) {
+          const fallbackTxt = verbalizarReglasCliente(textoOriginal);
+          btn.innerHTML = '⏹ Detener';
+          hablarTextoFonético(fallbackTxt, () => {
+            btn.innerHTML = '🔊 Escuchar';
+            btn.classList.remove('is-playing');
+            botonAudioActivo = null;
+          });
+        }
+      }
+    };
+
 
     // Genera un ejercicio; si se pasa tema usa contexto (botón por burbuja), si no es general (HU-07)
     async function generarEjercicio(tema) {
@@ -524,6 +729,12 @@
             ? `<div class="chat-educational-image"><img src="${data.imagen_url}" alt="Ilustración educativa" loading="lazy" style="max-width:100%;border-radius:12px;margin:12px 0;box-shadow:0 4px 12px rgba(0,0,0,0.1);"><p style="font-size:0.8rem;color:#64748b;margin:0 0 10px 0;text-align:center;">🎨 Esquema visual explicativo</p></div>`
             : '');
           if (window.renderizarMatematicas) renderizarMatematicas(bubble);
+
+          // Si el modo de lectura en voz alta está activado, comenzar a hablar automáticamente
+          if (vozActiva) {
+            const btnAudio = botMsg.querySelector('.btn-audio-msg');
+            if (btnAudio) reproducirAudioMensaje(btnAudio);
+          }
         } else {
           bubble.textContent = data.error || 'Lo siento, no pude procesar la respuesta en este momento.';
         }

@@ -932,3 +932,44 @@ input {
 .ilust-choice__btn:last-child {
   background: #0f766e;
 }
+
+/* ===== Botón de Voz en Navbar y Botón de Audio en Mensajes ===== */
+.navbar__audio-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.navbar__audio-btn:hover {
+  border-color: var(--accent-blue);
+  color: var(--text-primary);
+}
+
+.navbar__audio-btn.active {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+}
+
+.chat-action-btn.is-playing {
+  color: #10b981 !important;
+  font-weight: 700;
+  animation: pulseAudio 1.5s infinite;
+}
+
+@keyframes pulseAudio {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+

@@ -385,6 +385,32 @@ def api_esquema():
                     "prompt_en": plan.get("prompt_en", "")})
 
 
+@app.route("/api/audio-verbalizado", methods=["POST"])
+def api_audio_verbalizado():
+    """Convierte el contenido del mensaje a texto fonético y natural para ser leído en voz alta.
+
+    Transforma fórmulas matemáticas (raíces, fracciones, potencias), químicas y símbolos
+    a palabras habladas fluidas usando Gemini o reglas deterministas especializadas.
+    """
+    usuario_id = session.get("usuario_id")
+    if not usuario_id:
+        return jsonify({"ok": False, "error": "Debes iniciar sesión"}), 401
+
+    data = request.get_json() or {}
+    texto = (data.get("texto") or "").strip()
+    materia_nombre = (data.get("materia_nombre") or "General").strip()
+
+    if not texto:
+        return jsonify({"ok": False, "error": "No hay texto para verbalizar"}), 400
+
+    texto_hablado = gemini.verbalizar_para_audio(texto, materia_nombre)
+    return jsonify({
+        "ok": True,
+        "texto_hablado": texto_hablado
+    })
+
+
+
 @app.route("/api/historial", methods=["GET"])
 def api_historial():
     """Devuelve las preguntas y respuestas anteriores de una materia."""
