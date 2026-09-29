@@ -6,6 +6,13 @@
   <meta name="description" content="EduAsistente - Chat de estudio interactivo con Inteligencia Artificial">
   <title>EduAsistente - Chat de Estudio</title>
   <link rel="stylesheet" href="css/styles.css">
+  <!-- Anti-FOUC: aplicar tema guardado antes de renderizar -->
+  <script>
+    (function(){
+      var t = localStorage.getItem('app_tema');
+      if (t === 'light') document.documentElement.setAttribute('data-theme', 'light');
+    })();
+  </script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
@@ -358,6 +365,9 @@
         <button class="navbar__audio-btn" id="btn-toggle-voz" type="button" title="Activar o desactivar lectura en voz alta">
           🔊 <span id="lbl-toggle-voz">Voz</span>
         </button>
+        <button class="theme-toggle-btn" id="btn-theme-toggle" type="button" title="Cambiar a Modo Claro / Oscuro" aria-label="Cambiar tema">
+          🌙
+        </button>
         <span class="navbar__user" id="navbar-user">Cargando...</span>
         <button class="navbar__logout" id="btn-logout" aria-label="Cerrar sesión">
           ↪ Salir
@@ -509,6 +519,35 @@
       localStorage.clear();
       window.location.href = 'login.html';
     });
+
+    // =========================================================================
+    // TOGGLE MODO CLARO / OSCURO
+    // =========================================================================
+    const TEMA_KEY = 'app_tema';
+    const btnTemaToggle = document.getElementById('btn-theme-toggle');
+
+    function aplicarTema(tema) {
+      if (tema === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+        if (btnTemaToggle) btnTemaToggle.textContent = '☀️';
+        if (btnTemaToggle) btnTemaToggle.title = 'Cambiar a Modo Oscuro';
+      } else {
+        document.documentElement.removeAttribute('data-theme');
+        if (btnTemaToggle) btnTemaToggle.textContent = '🌙';
+        if (btnTemaToggle) btnTemaToggle.title = 'Cambiar a Modo Claro';
+      }
+      localStorage.setItem(TEMA_KEY, tema);
+    }
+
+    // Aplicar tema guardado al cargar (antes de pintar la página)
+    aplicarTema(localStorage.getItem(TEMA_KEY) || 'dark');
+
+    if (btnTemaToggle) {
+      btnTemaToggle.addEventListener('click', () => {
+        const actual = localStorage.getItem(TEMA_KEY) || 'dark';
+        aplicarTema(actual === 'dark' ? 'light' : 'dark');
+      });
+    }
 
     // 4. Elementos del chat
     const chatInput = document.getElementById('chat-input');

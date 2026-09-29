@@ -6,6 +6,13 @@
   <meta name="description" content="EduAsistente - Crea tu cuenta y comienza a estudiar con tu compañero de estudio en casa">
   <title>EduAsistente - Crear Cuenta</title>
   <link rel="stylesheet" href="css/styles.css">
+  <!-- Anti-FOUC: aplicar tema guardado antes de renderizar -->
+  <script>
+    (function(){
+      var t = localStorage.getItem('app_tema');
+      if (t === 'light') document.documentElement.setAttribute('data-theme', 'light');
+    })();
+  </script>
 </head>
 <body>
 

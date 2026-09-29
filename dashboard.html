@@ -6,6 +6,13 @@
   <meta name="description" content="EduAsistente - Elige una materia para empezar a estudiar">
   <title>EduAsistente - Mis Materias</title>
   <link rel="stylesheet" href="css/styles.css">
+  <!-- Anti-FOUC: aplicar tema guardado antes de renderizar -->
+  <script>
+    (function(){
+      var t = localStorage.getItem('app_tema');
+      if (t === 'light') document.documentElement.setAttribute('data-theme', 'light');
+    })();
+  </script>
 </head>
 <body>
 
@@ -18,6 +25,9 @@
       </div>
     </div>
     <div class="navbar__actions">
+      <button class="theme-toggle-btn" id="btn-theme-toggle" type="button" title="Cambiar tema" aria-label="Cambiar tema claro/oscuro">
+        🌙
+      </button>
       <span class="navbar__user" id="navbar-user">Cargando...</span>
       <button class="navbar__logout" id="btn-logout" aria-label="Cerrar sesión">
         ↪ Salir
@@ -135,8 +145,33 @@
           <button type="button" class="btn btn--ghost" id="btn-cancel-perfil">Cancelar</button>
           <button type="submit" class="btn btn--primary" id="btn-save-perfil">Guardar</button>
         </div>
-        <p class="form-hint" id="perfil-msg" style="text-align: center;"></p>
       </form>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: Archivos de la Materia ===== -->
+  <div class="modal-overlay" id="modal-overlay-materia-archivos" style="display: none;">
+    <div class="modal" id="modal-materia-archivos" role="dialog" aria-modal="true" aria-labelledby="modal-materia-archivos-title">
+      <div class="modal__header">
+        <h2 class="modal__title" id="modal-materia-archivos-title">📁 Archivos de la materia</h2>
+        <button class="modal__close" id="btn-close-materia-archivos" aria-label="Cerrar modal">✕</button>
+      </div>
+      <p class="modal__description" id="materia-archivos-desc">Materiales y apuntes subidos a esta materia.</p>
+
+      <div id="materia-archivos-loading" style="text-align: center; padding: 20px; font-size: 0.88rem; color: var(--text-secondary);">
+        ⏳ Cargando archivos...
+      </div>
+      <div id="materia-archivos-vacio" style="display: none; text-align: center; padding: 24px 10px; color: var(--text-muted); font-size: 0.88rem;">
+        📂 Aún no hay archivos adjuntos en esta materia. Puedes subirlos desde el chat con el botón 📎.
+      </div>
+
+      <ul class="archivos-lista-dash" id="materia-archivos-lista" style="display: none;"></ul>
+
+      <div class="modal__actions" style="margin-top: 14px;">
+        <button type="button" class="btn btn--primary" id="btn-entrar-chat-materia" style="width: 100%;">
+          💬 Ir a estudiar y subir archivos
+        </button>
+      </div>
     </div>
   </div>
 
@@ -166,6 +201,20 @@
     };
 
     // 2. Cargar lista de materias desde la API
+    let menuAbiertoActual = null;
+
+    // Cerrar cualquier menú desplegable si se toca fuera
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.subject-card__menu-trigger') && !e.target.closest('.subject-dropdown-menu')) {
+        cerrarMenusDesplegables();
+      }
+    });
+
+    function cerrarMenusDesplegables() {
+      document.querySelectorAll('.subject-dropdown-menu').forEach(m => m.remove());
+      menuAbiertoActual = null;
+    }
+
     async function cargarMaterias() {
       const grid = document.getElementById('subjects-grid');
       try {
@@ -180,20 +229,35 @@
           grid.innerHTML = '';
           data.materias.forEach(mat => {
             const tema = ICONOS[mat.nombre] || { icon: '📖', class: '' };
-            const card = document.createElement('a');
-            card.href = `chat.html?materia_id=${mat.id}&nombre=${encodeURIComponent(mat.nombre)}`;
+            const esBase = mat.es_base === 1 || [1, 2, 3, 4].includes(Number(mat.id)) && ['Matemáticas', 'Física', 'Química', 'Lenguaje'].includes(mat.nombre);
+            
+            const card = document.createElement('div');
             card.className = `subject-card ${tema.class}`;
             card.id = `card-${mat.id}`;
+
             card.innerHTML = `
-              <div class="subject-card__icon">${tema.icon}</div>
-              <div class="subject-card__name">${mat.nombre}</div>
-              <div class="subject-card__topics">${mat.descripcion || 'Temas generales'}</div>
-              <span class="subject-card__arrow">›</span>
+              <button type="button" class="subject-card__menu-trigger" aria-label="Opciones de ${escaparHTML(mat.nombre)}" title="Opciones">
+                ⋮
+              </button>
+              <a href="chat.html?materia_id=${mat.id}&nombre=${encodeURIComponent(mat.nombre)}" class="subject-card__content">
+                <div class="subject-card__icon">${tema.icon}</div>
+                <div class="subject-card__name">${escaparHTML(mat.nombre)}</div>
+                <div class="subject-card__topics">${escaparHTML(mat.descripcion || 'Temas generales')}</div>
+                <span class="subject-card__arrow">›</span>
+              </a>
             `;
+
+            // Botón de 3 puntos
+            const btnMenu = card.querySelector('.subject-card__menu-trigger');
+            btnMenu.addEventListener('click', (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              toggleMenuMateria(card, mat, esBase);
+            });
+
             grid.appendChild(card);
           });
         } else {
-          // Materias por defecto si la base de datos está vacía
           mostrarMateriasPorDefecto();
         }
       } catch (err) {
@@ -201,33 +265,222 @@
       }
     }
 
+    function toggleMenuMateria(card, mat, esBase) {
+      const existente = card.querySelector('.subject-dropdown-menu');
+      if (existente) {
+        existente.remove();
+        return;
+      }
+      cerrarMenusDesplegables();
+
+      const dropdown = document.createElement('div');
+      dropdown.className = 'subject-dropdown-menu';
+      dropdown.innerHTML = `
+        <button type="button" class="subject-dropdown-item btn-ver-archivos-mat">
+          📁 Ver archivos
+        </button>
+        ${!esBase ? `
+        <button type="button" class="subject-dropdown-item subject-dropdown-item--delete btn-eliminar-mat">
+          🗑️ Eliminar materia
+        </button>
+        ` : ''}
+      `;
+
+      dropdown.querySelector('.btn-ver-archivos-mat').addEventListener('click', (e) => {
+        e.stopPropagation();
+        cerrarMenusDesplegables();
+        abrirModalArchivosMateria(mat);
+      });
+
+      const btnDel = dropdown.querySelector('.btn-eliminar-mat');
+      if (btnDel) {
+        btnDel.addEventListener('click', (e) => {
+          e.stopPropagation();
+          cerrarMenusDesplegables();
+          confirmarEliminarMateria(mat);
+        });
+      }
+
+      card.appendChild(dropdown);
+    }
+
+    // Modal de archivos por materia
+    const overlayMateriaArchivos = document.getElementById('modal-overlay-materia-archivos');
+    const btnCloseMateriaArchivos = document.getElementById('btn-close-materia-archivos');
+    const loadingMateriaArchivos = document.getElementById('materia-archivos-loading');
+    const vacioMateriaArchivos = document.getElementById('materia-archivos-vacio');
+    const listaMateriaArchivos = document.getElementById('materia-archivos-lista');
+    const tituloMateriaArchivos = document.getElementById('modal-materia-archivos-title');
+    const descMateriaArchivos = document.getElementById('materia-archivos-desc');
+    const btnEntrarChat = document.getElementById('btn-entrar-chat-materia');
+
+    let materiaSeleccionadaActual = null;
+
+    function abrirModalArchivosMateria(mat) {
+      materiaSeleccionadaActual = mat;
+      tituloMateriaArchivos.textContent = `📁 Archivos: ${mat.nombre}`;
+      descMateriaArchivos.textContent = `Materiales y apuntes subidos para estudiar ${mat.nombre}.`;
+      overlayMateriaArchivos.style.display = 'flex';
+      loadingMateriaArchivos.style.display = 'block';
+      vacioMateriaArchivos.style.display = 'none';
+      listaMateriaArchivos.style.display = 'none';
+      listaMateriaArchivos.innerHTML = '';
+
+      btnEntrarChat.onclick = () => {
+        window.location.href = `chat.html?materia_id=${mat.id}&nombre=${encodeURIComponent(mat.nombre)}`;
+      };
+
+      cargarArchivosDeMateria(mat.id);
+    }
+
+    async function cargarArchivosDeMateria(materiaId) {
+      try {
+        const res = await fetch(`/api/archivos?materia_id=${encodeURIComponent(materiaId)}`);
+        const data = await res.json();
+        loadingMateriaArchivos.style.display = 'none';
+
+        if (data.ok && Array.isArray(data.archivos) && data.archivos.length > 0) {
+          listaMateriaArchivos.style.display = 'flex';
+          listaMateriaArchivos.innerHTML = '';
+          data.archivos.forEach(arch => {
+            const li = document.createElement('li');
+            li.className = 'archivo-item-dash';
+            const icon = arch.extension === '.pdf' ? '📄' : '🖼️';
+            li.innerHTML = `
+              <div class="archivo-item-dash__info">
+                <span style="font-size: 1.25rem;">${icon}</span>
+                <div style="overflow: hidden;">
+                  <div class="archivo-item-dash__name" title="${escaparHTML(arch.nombre_original)}">${escaparHTML(arch.nombre_original)}</div>
+                  <div class="archivo-item-dash__meta">${formatearTamano(arch.tamano_bytes)} • ${arch.creado_en ? arch.creado_en.slice(0, 10) : ''}</div>
+                </div>
+              </div>
+              <div class="archivo-item-dash__actions">
+                <a href="/api/archivos/${encodeURIComponent(arch.id)}/descargar" target="_blank" rel="noopener" class="btn-archivo-dash" title="Ver / Descargar">
+                  👁️ Ver
+                </a>
+                <button type="button" class="btn-archivo-dash btn-archivo-dash--del" title="Eliminar archivo">
+                  🗑️
+                </button>
+              </div>
+            `;
+
+            li.querySelector('.btn-archivo-dash--del').addEventListener('click', async () => {
+              if (!confirm(`¿Eliminar '${arch.nombre_original}' de Cloudflare R2 y D1?`)) return;
+              try {
+                const delRes = await fetch(`/api/archivos/${encodeURIComponent(arch.id)}`, { method: 'DELETE' });
+                const delData = await delRes.json();
+                if (delData.ok) {
+                  li.remove();
+                  if (listaMateriaArchivos.children.length === 0) {
+                    listaMateriaArchivos.style.display = 'none';
+                    vacioMateriaArchivos.style.display = 'block';
+                  }
+                } else {
+                  alert(delData.error || 'No se pudo eliminar el archivo');
+                }
+              } catch (e) {
+                alert('Error al conectar con el servidor.');
+              }
+            });
+
+            listaMateriaArchivos.appendChild(li);
+          });
+        } else {
+          vacioMateriaArchivos.style.display = 'block';
+        }
+      } catch (e) {
+        loadingMateriaArchivos.style.display = 'none';
+        vacioMateriaArchivos.style.display = 'block';
+        vacioMateriaArchivos.textContent = 'Error al cargar los archivos.';
+      }
+    }
+
+    if (btnCloseMateriaArchivos) {
+      btnCloseMateriaArchivos.addEventListener('click', () => {
+        overlayMateriaArchivos.style.display = 'none';
+      });
+    }
+    if (overlayMateriaArchivos) {
+      overlayMateriaArchivos.addEventListener('click', (e) => {
+        if (e.target === overlayMateriaArchivos) overlayMateriaArchivos.style.display = 'none';
+      });
+    }
+
+    async function confirmarEliminarMateria(mat) {
+      if (!confirm(`¿Estás seguro de que deseas eliminar la materia "${mat.nombre}"?\n\nSe eliminarán sus dudas, ejercicios y todos los archivos adjuntos.`)) {
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/materias/${encodeURIComponent(mat.id)}`, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        if (data.ok) {
+          cargarMaterias();
+        } else {
+          alert(data.error || 'No se pudo eliminar la materia');
+        }
+      } catch (e) {
+        alert('Error al conectar con el servidor para eliminar la materia.');
+      }
+    }
+
+    function escaparHTML(texto) {
+      if (!texto) return '';
+      const div = document.createElement('div');
+      div.textContent = texto;
+      return div.innerHTML;
+    }
+
+    function formatearTamano(bytes) {
+      if (!bytes || bytes <= 0) return '0 B';
+      const k = 1024;
+      const dm = 1;
+      const sizes = ['B', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    }
+
     function mostrarMateriasPorDefecto() {
       const grid = document.getElementById('subjects-grid');
       grid.innerHTML = `
-        <a href="chat.html?materia_id=1&nombre=Matemáticas" class="subject-card subject-card--math">
-          <div class="subject-card__icon">📐</div>
-          <div class="subject-card__name">Matemáticas</div>
-          <div class="subject-card__topics">Álgebra, Geometría, Operaciones</div>
-          <span class="subject-card__arrow">›</span>
-        </a>
-        <a href="chat.html?materia_id=2&nombre=Física" class="subject-card subject-card--physics">
-          <div class="subject-card__icon">⚡</div>
-          <div class="subject-card__name">Física</div>
-          <div class="subject-card__topics">Fuerzas, Velocidad, Energía</div>
-          <span class="subject-card__arrow">›</span>
-        </a>
-        <a href="chat.html?materia_id=3&nombre=Química" class="subject-card subject-card--chemistry">
-          <div class="subject-card__icon">🧪</div>
-          <div class="subject-card__name">Química</div>
-          <div class="subject-card__topics">Elementos, Reacciones, Fórmulas</div>
-          <span class="subject-card__arrow">›</span>
-        </a>
-        <a href="chat.html?materia_id=4&nombre=Lenguaje" class="subject-card subject-card--language">
-          <div class="subject-card__icon">📚</div>
-          <div class="subject-card__name">Lenguaje</div>
-          <div class="subject-card__topics">Gramática, Lectura, Ortografía</div>
-          <span class="subject-card__arrow">›</span>
-        </a>
+        <div class="subject-card subject-card--math">
+          <button type="button" class="subject-card__menu-trigger" onclick="abrirModalArchivosMateria({id:1,nombre:'Matemáticas'})" title="Ver archivos">⋮</button>
+          <a href="chat.html?materia_id=1&nombre=Matemáticas" class="subject-card__content">
+            <div class="subject-card__icon">📐</div>
+            <div class="subject-card__name">Matemáticas</div>
+            <div class="subject-card__topics">Álgebra, Geometría, Operaciones</div>
+            <span class="subject-card__arrow">›</span>
+          </a>
+        </div>
+        <div class="subject-card subject-card--physics">
+          <button type="button" class="subject-card__menu-trigger" onclick="abrirModalArchivosMateria({id:2,nombre:'Física'})" title="Ver archivos">⋮</button>
+          <a href="chat.html?materia_id=2&nombre=Física" class="subject-card__content">
+            <div class="subject-card__icon">⚡</div>
+            <div class="subject-card__name">Física</div>
+            <div class="subject-card__topics">Fuerzas, Velocidad, Energía</div>
+            <span class="subject-card__arrow">›</span>
+          </a>
+        </div>
+        <div class="subject-card subject-card--chemistry">
+          <button type="button" class="subject-card__menu-trigger" onclick="abrirModalArchivosMateria({id:3,nombre:'Química'})" title="Ver archivos">⋮</button>
+          <a href="chat.html?materia_id=3&nombre=Química" class="subject-card__content">
+            <div class="subject-card__icon">🧪</div>
+            <div class="subject-card__name">Química</div>
+            <div class="subject-card__topics">Elementos, Reacciones, Fórmulas</div>
+            <span class="subject-card__arrow">›</span>
+          </a>
+        </div>
+        <div class="subject-card subject-card--language">
+          <button type="button" class="subject-card__menu-trigger" onclick="abrirModalArchivosMateria({id:4,nombre:'Lenguaje'})" title="Ver archivos">⋮</button>
+          <a href="chat.html?materia_id=4&nombre=Lenguaje" class="subject-card__content">
+            <div class="subject-card__icon">📚</div>
+            <div class="subject-card__name">Lenguaje</div>
+            <div class="subject-card__topics">Gramática, Lectura, Ortografía</div>
+            <span class="subject-card__arrow">›</span>
+          </a>
+        </div>
       `;
     }
 
@@ -343,6 +596,28 @@
       localStorage.clear();
       window.location.href = 'login.html';
     });
+
+    // 6. Toggle Modo Claro / Oscuro
+    (function() {
+      const TEMA_KEY = 'app_tema';
+      const btn = document.getElementById('btn-theme-toggle');
+      function aplicarTema(tema) {
+        if (tema === 'light') {
+          document.documentElement.setAttribute('data-theme', 'light');
+          if (btn) { btn.textContent = '☀️'; btn.title = 'Cambiar a Modo Oscuro'; }
+        } else {
+          document.documentElement.removeAttribute('data-theme');
+          if (btn) { btn.textContent = '🌙'; btn.title = 'Cambiar a Modo Claro'; }
+        }
+        localStorage.setItem(TEMA_KEY, tema);
+      }
+      aplicarTema(localStorage.getItem(TEMA_KEY) || 'dark');
+      if (btn) {
+        btn.addEventListener('click', () => {
+          aplicarTema((localStorage.getItem(TEMA_KEY) || 'dark') === 'dark' ? 'light' : 'dark');
+        });
+      }
+    })();
   </script>
 
 </body>

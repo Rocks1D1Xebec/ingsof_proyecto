@@ -328,13 +328,13 @@ def obtener_materias(usuario_id: int | None = None) -> list[dict]:
     try:
         if usuario_id is not None:
             filas = ejecutar_sql(
-                """SELECT id, nombre, descripcion FROM materias
+                """SELECT id, nombre, descripcion, es_base FROM materias
                    WHERE es_base = 1 OR usuario_id = ? ORDER BY id ASC""",
                 [usuario_id],
             )
         else:
             filas = ejecutar_sql(
-                "SELECT id, nombre, descripcion FROM materias WHERE es_base = 1 ORDER BY id ASC"
+                "SELECT id, nombre, descripcion, es_base FROM materias WHERE es_base = 1 ORDER BY id ASC"
             )
         if filas:
             return filas
@@ -342,20 +342,68 @@ def obtener_materias(usuario_id: int | None = None) -> list[dict]:
         pass
     # Fallback (D1 sin migrar o vacía): materias base en memoria
     return [
-        {"id": 1, "nombre": "Matemáticas", "descripcion": "Álgebra, Geometría, Aritmética"},
-        {"id": 2, "nombre": "Física", "descripcion": "Fuerzas, Velocidad, Energía, MRUV"},
-        {"id": 3, "nombre": "Química", "descripcion": "Elementos, Reacciones, Enlaces"},
-        {"id": 4, "nombre": "Lenguaje", "descripcion": "Gramática, Lectura, Ortografía"},
+        {"id": 1, "nombre": "Matemáticas", "descripcion": "Álgebra, Geometría, Aritmética", "es_base": 1},
+        {"id": 2, "nombre": "Física", "descripcion": "Fuerzas, Velocidad, Energía, MRUV", "es_base": 1},
+        {"id": 3, "nombre": "Química", "descripcion": "Elementos, Reacciones, Enlaces", "es_base": 1},
+        {"id": 4, "nombre": "Lenguaje", "descripcion": "Gramática, Lectura, Ortografía", "es_base": 1},
     ]
+
+
 def crear_materia(nombre: str, descripcion: str = "", usuario_id: int | None = None) -> dict | None:
     """Crea una materia PRIVADA del usuario (usuario_id NOT NULL, es_base=0)."""
     sql = """
         INSERT INTO materias (nombre, descripcion, usuario_id, es_base)
         VALUES (?, ?, ?, 0)
-        RETURNING id, nombre, descripcion
+        RETURNING id, nombre, descripcion, es_base
     """
     filas = ejecutar_sql(sql, [nombre, descripcion, usuario_id])
     return filas[0] if filas else None
+
+
+def eliminar_materia(materia_id: int, usuario_id: int) -> bool:
+    """
+    Elimina una materia privada creada por el usuario autenticado.
+    No permite eliminar materias base globales (es_base = 1).
+    Borra en cascada los mensajes, respuestas, ejercicios, nivel y archivos asociados.
+    """
+    try:
+        filas = ejecutar_sql("SELECT id, es_base, usuario_id FROM materias WHERE id = ?", [materia_id])
+        if not filas:
+            return False
+        materia = filas[0]
+        if materia.get("es_base") == 1:
+            return False
+        if materia.get("usuario_id") != usuario_id:
+            return False
+
+        # 1. Obtener archivos asociados para limpiarlos
+        archs = ejecutar_sql("SELECT id FROM archivos WHERE materia_id = ? AND usuario_id = ?", [materia_id, usuario_id])
+        for a in archs:
+            ejecutar_sql("DELETE FROM archivos WHERE id = ?", [a["id"]])
+
+        # 2. Borrar respuestas de mensajes de la materia
+        mensajes = ejecutar_sql("SELECT id FROM mensajes WHERE materia_id = ? AND usuario_id = ?", [materia_id, usuario_id])
+        for m in mensajes:
+            ejecutar_sql("DELETE FROM respuestas WHERE mensaje_id = ?", [m["id"]])
+        ejecutar_sql("DELETE FROM mensajes WHERE materia_id = ? AND usuario_id = ?", [materia_id, usuario_id])
+
+        # 3. Borrar ejercicios y respuestas
+        ejercicios = ejecutar_sql("SELECT id FROM ejercicios WHERE materia_id = ?", [materia_id])
+        for ej in ejercicios:
+            ejecutar_sql("DELETE FROM respuestas_ejercicios WHERE ejercicio_id = ?", [ej["id"]])
+        ejecutar_sql("DELETE FROM ejercicios WHERE materia_id = ?", [materia_id])
+
+        # 4. Borrar nivel_usuario
+        ejecutar_sql("DELETE FROM nivel_usuario WHERE materia_id = ? AND usuario_id = ?", [materia_id, usuario_id])
+
+        # 5. Borrar la materia
+        ejecutar_sql_estricto("DELETE FROM materias WHERE id = ? AND usuario_id = ?", [materia_id, usuario_id])
+        return True
+    except Exception as e:
+        print(f"[D1] Error al eliminar materia {materia_id}: {e}")
+        return False
+
+
 def materia_visible_para(materia_id: int, usuario_id: int | None) -> bool:
     """Verifica que una materia sea base global o privada del usuario."""
     try:

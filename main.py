@@ -209,6 +209,35 @@ def api_materias_crear():
     return jsonify({"ok": True, "materia": materia}), 201
 
 
+@app.route("/api/materias/<int:materia_id>", methods=["DELETE"])
+def api_materias_eliminar(materia_id):
+    """
+    Elimina una materia privada creada por el usuario autenticado.
+    No permite borrar materias base globales.
+    Limpia también de R2 todos los archivos asociados a esa materia.
+    """
+    usuario_id = session.get("usuario_id")
+    if not usuario_id:
+        return jsonify({"ok": False, "error": "Debes iniciar sesión"}), 401
+    usuario_id = int(usuario_id)
+
+    # 1. Obtener archivos asociados en esta materia para eliminarlos de R2
+    archivos = db.obtener_archivos(usuario_id, materia_id)
+    if archivos and r2.esta_configurado():
+        for arch in archivos:
+            r2_key = arch.get("r2_key")
+            if r2_key:
+                r2.eliminar_archivo(r2_key)
+
+    # 2. Eliminar materia y registros asociados en D1
+    exito = db.eliminar_materia(materia_id, usuario_id)
+    if not exito:
+        return jsonify({"ok": False, "error": "No se pudo eliminar la materia. Asegúrate de que sea una materia creada por ti y no una materia base global"}), 400
+
+    return jsonify({"ok": True, "mensaje": "Materia eliminada exitosamente"})
+
+
+
 # =====================================================================
 # PERFIL DE APRENDIZAJE (RF-12)
 # =====================================================================
