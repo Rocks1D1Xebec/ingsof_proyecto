@@ -10,11 +10,12 @@ educativo y fácil de entender.
 """
 
 import os
-from flask import Flask, jsonify, request, send_file, send_from_directory, session
+from flask import Flask, Response, jsonify, request, send_file, send_from_directory, session
 from dotenv import load_dotenv
 from werkzeug.security import check_password_hash, generate_password_hash
 
 import cloudflare_d1 as db
+import cloudflare_r2 as r2
 import gemini_helper as gemini
 
 # Cargar variables del archivo .env
@@ -25,6 +26,19 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 app = Flask(__name__)
 # Llave secreta para manejar las sesiones en el navegador
 app.secret_key = os.getenv("SECRET_KEY", "mi_clave_secreta_escolar_123")
+
+# Límite global de petición: es una red de seguridad para que ninguna ruta
+# pueda agotar la memoria del proceso, NO el límite del módulo de archivos.
+#
+# El límite real de 10 MB por archivo se aplica SOLO en
+# POST /api/archivos/subir (ver TAMANO_MAXIMO_BYTES más abajo). Antes esta
+# variable valía 10 MB para toda la app, lo que rompía endpoints que sí
+# necesitan peticiones grandes: /api/chat reenvía el historial, y ese
+# historial incluye `respuestas.imagen_url`, que puede ser un data URL
+# generado por Gemini. Ese valor de 32 MB deja margen de sobra para el
+# chat, la generación de imágenes, los esquemas y el audio verbalizado.
+LIMITE_MAXIMO_PETICION_BYTES = 32 * 1024 * 1024
+app.config["MAX_CONTENT_LENGTH"] = LIMITE_MAXIMO_PETICION_BYTES
 
 # Asegurar tablas y materias base en Cloudflare D1
 db.asegurar_inicializacion()
@@ -552,6 +566,433 @@ def api_revisar():
         "feedback": evaluacion["feedback"],
         "revision_id": revision["id"] if revision else None,
     })
+
+
+# =====================================================================
+# GESTIÓN DE ARCHIVOS (CLOUDFLARE R2 + CLOUDFLARE D1)
+# =====================================================================
+EXTENSIONES_PERMITIDAS = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".pdf"}
+MIME_TYPES_PERMITIDOS = {
+    "image/png",
+    "image/jpeg",
+    "image/webp",
+    "image/gif",
+    "application/pdf"
+}
+# Límite del módulo de archivos. Se aplica solo en POST /api/archivos/subir.
+TAMANO_MAXIMO_BYTES = 10 * 1024 * 1024  # 10 MB
+
+# Firmas binarias (magic bytes) admitidas por extensión. Evita que un
+# ejecutable o un script se suba disfrazado de imagen o PDF.
+FIRMAS_POR_EXTENSION = {
+    ".pdf": (b"%PDF",),
+    ".png": (b"\x89PNG\r\n\x1a\n",),
+    ".jpg": (b"\xff\xd8\xff",),
+    ".jpeg": (b"\xff\xd8\xff",),
+    ".gif": (b"GIF87a", b"GIF89a"),
+    # WEBP: "RIFF" al inicio y "WEBP" en los bytes 8-11.
+    ".webp": (b"RIFF",),
+}
+PREFIJOS_ESPECIALES = {".webp": (8, b"WEBP")}
+
+# Caracteres que no deben viajar en un nombre de archivo.
+_CARACTERES_PROHIBIDOS_EN_NOMBRE = '"<>|:*?'
+
+
+def _nombre_mostrable(nombre_bruto: str, ext: str, usuario_id: int) -> str:
+    """
+    Limpia el nombre que eligió el usuario para poder MOSTRARLO, conservando
+    acentos, espacios y mayúsculas.
+
+    No se usa para construir la clave en R2: esa la genera
+    `r2.generar_key_segura()` con un UUID, así que un nombre con
+    acentos no afecta en absoluto a la seguridad del almacenamiento.
+
+    Se eliminan las carpetas del camino, los caracteres de control y los
+    símbolos que romperían la cabecera `Content-Disposition` de la descarga.
+    """
+    # Normaliza separadores de Windows y POSIX y se queda con el nombre final.
+    base = os.path.basename(str(nombre_bruto).replace("\\", "/")).strip()
+    # isprintable() ya descarta \r y \n y el resto de caracteres de control.
+    base = "".join(c for c in base if c.isprintable())
+    base = "".join(c for c in base if c not in _CARACTERES_PROHIBIDOS_EN_NOMBRE)
+    base = base.strip()
+
+    # Se quitan los puntos iniciales: un nombre que empieza por punto se
+    # mostraría como un archivo oculto y no aporta nada ("<<<>.pdf" -> "pdf").
+    base = base.lstrip(".")
+
+    # Si no queda un nombre reconocible, se usa el genérico conservando la
+    # extensión, para que el usuario siga viendo de qué formato se trata.
+    if not base or not os.path.splitext(base)[0].strip("._- "):
+        return f"archivo_{usuario_id}{ext}"
+
+    # 180 caracteres de sobra para el nombre; el nombre NO es la clave en R2.
+    if len(base) > 180:
+        base = base[:180].strip()
+    return base
+
+
+def _firma_valida(contenido: bytes, ext: str) -> bool:
+    """
+    Comprueba que los primeros bytes correspondan al formato declarado.
+
+    Los formatos sin firma especial (PNG, JPEG, GIF, PDF) solo comparan el
+    prefijo. El WEBP es el caso aparte: empieza por "RIFF" y lleva "WEBP" en los
+    bytes 8-11, así que se comprueba en dos sitios.
+    """
+    firmas = FIRMAS_POR_EXTENSION.get(ext)
+    if not firmas:
+        return True
+    if not any(contenido.startswith(firma) for firma in firmas):
+        return False
+    # Comprobación adicional del WEBP: "WEBP" va en los bytes 8-11.
+    posicion, esperado = PREFIJOS_ESPECIALES.get(ext, (None, None))
+    if posicion is not None:
+        return contenido[posicion:posicion + len(esperado)] == esperado
+    return True
+
+
+def _materia_asociable(materia_id: int, usuario_id: int) -> bool:
+    """
+    Verificación estricta de la materia a la que se asocia un archivo.
+
+    `db.materia_visible_para` es permisiva a propósito: si D1 no responde,
+    deja pasar las materias base 1-4 para no cortar el chat ni los ejercicios.
+    Para asociar un archivo no se hereda esa permisividad: se exige que la
+    materia exista de verdad y sea visible para el usuario, y ante la duda se
+    rechaza en lugar de guardar un archivo en una materia ajena.
+    """
+    try:
+        filas = db.ejecutar_sql_estricto(
+            "SELECT es_base, usuario_id FROM materias WHERE id = ?", [materia_id]
+        )
+    except db.D1Error as error:
+        print(f"[D1] No se pudo validar la materia {materia_id} para un archivo: {error}")
+        return False
+
+    if not filas:
+        return False
+    materia = filas[0]
+    if materia.get("es_base") == 1:
+        return True
+    return materia.get("usuario_id") == usuario_id
+
+
+@app.errorhandler(413)
+def request_entity_too_large(error):
+    """
+    Respuesta cuando la petición supera el límite global del proceso.
+
+    Se distingue el caso de una subida de archivos para poder dar el mensaje
+    correcto en lugar de un error genérico.
+    """
+    es_subida = request.path.rstrip("/").endswith("/api/archivos/subir")
+    if es_subida:
+        return jsonify({
+            "ok": False,
+            "error": "El archivo excede el tamaño máximo permitido de 10 MB"
+        }), 413
+    return jsonify({
+        "ok": False,
+        "error": "La petición es demasiado grande para el servidor"
+    }), 413
+
+
+@app.route("/api/archivos/subir", methods=["POST"])
+def api_archivos_subir():
+    """
+    Sube un archivo (imagen o PDF) a Cloudflare R2 y registra sus metadatos en Cloudflare D1.
+    Valida extensión, MIME type, tamaño y magic bytes en el backend.
+    """
+    usuario_id = session.get("usuario_id")
+    if not usuario_id:
+        return jsonify({"ok": False, "error": "Debes iniciar sesión para subir archivos"}), 401
+    usuario_id = int(usuario_id)
+
+    if "archivo" not in request.files:
+        return jsonify({"ok": False, "error": "No se envió ningún archivo en la petición"}), 400
+
+    archivo = request.files["archivo"]
+    if not archivo or not archivo.filename:
+        return jsonify({"ok": False, "error": "Nombre de archivo inválido o vacío"}), 400
+
+    nombre_bruto = archivo.filename
+    _, ext = os.path.splitext(nombre_bruto.lower())
+
+    # 0. Rechazo temprano por el tamaño declarado en la petición, antes de
+    #    leer el archivo en memoria. El límite real se vuelve a comprobar abajo
+    #    sobre los bytes leídos, que es el dato fiable.
+    if request.content_length and request.content_length > TAMANO_MAXIMO_BYTES:
+        return jsonify({
+            "ok": False,
+            "error": (
+                "El archivo excede el tamaño máximo de 10 MB "
+                f"({request.content_length / (1024 * 1024):.2f} MB)"
+            )
+        }), 413
+
+    # 1. Validar extensión permitida
+    if ext not in EXTENSIONES_PERMITIDAS:
+        return jsonify({
+            "ok": False,
+            "error": f"Extensión no permitida ({ext}). Tipos admitidos: PNG, JPG, JPEG, WEBP, GIF y PDF"
+        }), 400
+
+    # 2. Validar MIME type
+    mime_type = (archivo.mimetype or "").lower()
+    if mime_type not in MIME_TYPES_PERMITIDOS:
+        return jsonify({
+            "ok": False,
+            "error": f"Formato MIME no admitido ({mime_type}). Solo se admiten imágenes y PDF"
+        }), 400
+
+    # 3. Validar contenido y tamaño
+    contenido_bytes = archivo.read()
+    tamano_bytes = len(contenido_bytes)
+    if tamano_bytes == 0:
+        return jsonify({"ok": False, "error": "El archivo enviado está vacío (0 bytes)"}), 400
+    if tamano_bytes > TAMANO_MAXIMO_BYTES:
+        return jsonify({
+            "ok": False,
+            "error": f"El archivo excede el tamaño máximo de 10 MB ({tamano_bytes / (1024*1024):.2f} MB)"
+        }), 413
+
+    # 4. Validación de firma binaria (magic bytes): evita subir un ejecutable o
+    #    un script renombrado a .png o .pdf.
+    if not _firma_valida(contenido_bytes, ext):
+        return jsonify({
+            "ok": False,
+            "error": f"El contenido del archivo no corresponde a un {ext.lstrip('.').upper()} válido"
+        }), 400
+
+    # Materia ID opcional asociada al archivo. La validación es estricta: la
+    # materia debe existir de verdad y ser visible para este usuario.
+    materia_id_form = request.form.get("materia_id")
+    materia_id = None
+    if materia_id_form:
+        try:
+            materia_id = int(materia_id_form)
+        except (TypeError, ValueError):
+            return jsonify({
+                "ok": False,
+                "error": "El identificador de materia no es válido"
+            }), 400
+        if not _materia_asociable(materia_id, usuario_id):
+            return jsonify({
+                "ok": False,
+                "error": "La materia indicada no existe o no está disponible para tu cuenta"
+            }), 403
+
+    # Nombre que verá el usuario en el modal y en la tarjeta del chat.
+    # Se conservan acentos y espacios. La clave de R2 se genera aparte con un
+    # UUID, así que este nombre nunca forma parte de una ruta de almacenamiento.
+    nombre_para_mostrar = _nombre_mostrable(nombre_bruto, ext, usuario_id)
+
+    # 5. Generar key única en R2 (usuarios/{usuario_id}/{uuid}.{ext})
+    r2_key = r2.generar_key_segura(usuario_id, ext)
+
+    # 6. Almacenamiento físico en Cloudflare R2
+    #    Se comprueba la configuración ANTES de subir para poder distinguir un
+    #    "no está configurado" de un "falló la subida". Sin este paso, un .env
+    #    sin rellenar devolvía un 502 genérico que no decía qué corregir.
+    motivo_r2 = r2.motivo_de_configuracion()
+    if motivo_r2:
+        print(f"[ARCHIVOS] Subida rechazada: {motivo_r2}")
+        return jsonify({
+            "ok": False,
+            "error": "El almacenamiento de archivos no está configurado en el servidor.",
+            "detalle": motivo_r2,
+        }), 503
+
+    subido_r2 = r2.subir_archivo(contenido_bytes, r2_key, mime_type)
+    if not subido_r2:
+        return jsonify({
+            "ok": False,
+            "error": "No se pudo guardar el archivo en Cloudflare R2. Inténtalo de nuevo."
+        }), 502
+
+    # 7. Registrar metadatos en Cloudflare D1
+    try:
+        registro_d1 = db.guardar_archivo(
+            usuario_id=usuario_id,
+            nombre_original=nombre_para_mostrar,
+            r2_key=r2_key,
+            mime_type=mime_type,
+            extension=ext.lstrip("."),
+            tamano_bytes=tamano_bytes,
+            materia_id=materia_id
+        )
+    except db.D1Error:
+        # El INSERT sí ocurrió pero no se pudo leer el id. NO se borra el objeto
+        # de R2: el metadato ya existe en D1 y borrarlo dejaría un registro
+        # apuntando a un archivo inexistente. Se avisa por consola para que se
+        # pueda revisar a mano.
+        print(
+            "[ARCHIVOS] El archivo se subió a R2 y su metadato quedó en D1, "
+            f"pero no se pudo confirmar la operación (r2_key={r2_key}). "
+            "No se eliminó de R2 para no dejar una referencia rota en D1."
+        )
+        return jsonify({
+            "ok": False,
+            "error": (
+                "El archivo se guardó, pero no se pudo confirmar el registro. "
+                "Revisa el material ya subido antes de volver a intentarlo."
+            )
+        }), 503
+
+    # Si el metadato no llegó a escribirse, se revierte la subida en R2 para no
+    # dejar un objeto huérfano que el usuario no puede ver ni borrar.
+    if not registro_d1:
+        revertido = r2.eliminar_archivo(r2_key)
+        if not revertido:
+            print(
+                "[ARCHIVOS] ADVERTENCIA: no se pudo escribir el metadato en D1 "
+                f"ni revertir la subida en R2. Quedó un objeto huérfano: {r2_key}"
+            )
+        return jsonify({
+            "ok": False,
+            "error": "Error al registrar metadatos en Cloudflare D1. El archivo físico fue descartado de R2"
+        }), 500
+
+    return jsonify({
+        "ok": True,
+        "mensaje": "¡Archivo subido exitosamente!",
+        "archivo": registro_d1
+    }), 201
+
+
+@app.route("/api/archivos", methods=["GET"])
+def api_archivos_listar():
+    """
+    Lista los archivos del usuario autenticado.
+
+    - `?materia_id=N` : solo los archivos de esa materia. Es lo que usa el
+      modal "Materiales" y el contador del chat, así que ambos siempre coinciden.
+    - sin `materia_id` : todos los archivos del usuario, incluidos los que no
+      están asociados a ninguna materia.
+    """
+    usuario_id = session.get("usuario_id")
+    if not usuario_id:
+        return jsonify({"ok": False, "error": "Debes iniciar sesión"}), 401
+    usuario_id = int(usuario_id)
+
+    materia_id_param = request.args.get("materia_id")
+    materia_id = None
+    if materia_id_param:
+        try:
+            materia_id = int(materia_id_param)
+        except (TypeError, ValueError):
+            return jsonify({
+                "ok": False,
+                "error": "El parámetro materia_id no es un número válido"
+            }), 400
+
+    archivos = db.obtener_archivos(usuario_id, materia_id)
+    return jsonify({"ok": True, "archivos": archivos})
+
+
+@app.route("/api/archivos/<int:archivo_id>/descargar", methods=["GET"])
+def api_archivos_descargar(archivo_id):
+    """
+    Descarga o previsualiza de forma segura un archivo almacenado en Cloudflare R2.
+    Verifica estrictamente que pertenezca al usuario de la sesión (aislamiento multiusuario).
+    """
+    usuario_id = session.get("usuario_id")
+    if not usuario_id:
+        return jsonify({"ok": False, "error": "Debes iniciar sesión"}), 401
+    usuario_id = int(usuario_id)
+
+    # 1. Obtener metadatos desde D1 verificando usuario_id
+    meta = db.obtener_archivo_por_id(archivo_id, usuario_id)
+    if not meta:
+        return jsonify({"ok": False, "error": "Archivo no encontrado o no tienes permisos de acceso"}), 404
+
+    # 2. Obtener objeto físico desde Cloudflare R2
+    obj = r2.obtener_archivo(meta["r2_key"])
+    if not obj:
+        return jsonify({"ok": False, "error": "El archivo físico no se encuentra en Cloudflare R2"}), 404
+
+    forzar_descarga = request.args.get("descargar", "0") == "1"
+    disposition = "attachment" if forzar_descarga else "inline"
+    extension = meta.get("extension") or "bin"
+    mime = meta.get("mime_type") or obj.get("content_type") or "application/octet-stream"
+
+    # Nombre para la cabecera de descarga. `_nombre_mostrable` ya elimina comillas
+    # y caracteres de control, así que no puede inyectar cabeceras HTTP. Aun así
+    # se vuelve a filtrar aquí: es la última línea antes de la respuesta.
+    nombre = meta.get("nombre_original") or f"archivo_{archivo_id}.{extension}"
+    nombre = "".join(c for c in str(nombre) if c.isprintable() and c not in '"\\')
+    if not nombre:
+        nombre = f"archivo_{archivo_id}.{extension}"
+
+    # Streaming seguro al navegador por bloques
+    def generar_flujo():
+        for chunk in obj["body"].iter_chunks(chunk_size=64 * 1024):
+            yield chunk
+
+    response = Response(generar_flujo(), mimetype=mime)
+    response.headers["Content-Disposition"] = f'{disposition}; filename="{nombre}"'
+    if obj.get("content_length"):
+        response.headers["Content-Length"] = str(obj["content_length"])
+    return response
+
+
+@app.route("/api/archivos/<int:archivo_id>", methods=["DELETE"])
+def api_archivos_eliminar(archivo_id):
+    """
+    Elimina un archivo: primero el objeto físico de Cloudflare R2 y después el
+    metadato de D1. Verifica estrictamente que pertenezca al usuario de sesión.
+
+    Regla de coherencia: la referencia de D1 no se borra hasta que el objeto
+    físico se ha confirmado como borrado. Si R2 no está configurado o falla,
+    el registro se conserva.
+
+    Motivo: si se borrara el metadato sin poder tocar el bucket, el objeto
+    quedaría en R2 sin ninguna forma de encontrarlo ni de eliminarlo desde la
+    aplicación. Seguiría ocupando espacio y pagando almacenamiento y salida
+    para siempre. Conservando la referencia, el alumno puede reintentar en
+    cuanto se configure el servicio.
+    """
+    usuario_id = session.get("usuario_id")
+    if not usuario_id:
+        return jsonify({"ok": False, "error": "Debes iniciar sesión"}), 401
+    usuario_id = int(usuario_id)
+
+    # 1. Obtener metadatos verificando usuario_id
+    meta = db.obtener_archivo_por_id(archivo_id, usuario_id)
+    if not meta:
+        return jsonify({"ok": False, "error": "Archivo no encontrado o no tienes permisos"}), 404
+
+    # 2. Eliminar físicamente de R2. Se distingue el caso "no configurado"
+    #    del caso "falló", porque el mensaje al usuario y al admin son distintos.
+    motivo_r2 = r2.motivo_de_configuracion()
+    if motivo_r2:
+        print(f"[ARCHIVOS] Borrado retenido: {motivo_r2} (archivo_id={archivo_id})")
+        return jsonify({
+            "ok": False,
+            "error": "No se pudo eliminar el archivo porque el servidor no tiene configurado el almacenamiento.",
+            "detalle": motivo_r2,
+        }), 503
+
+    borrado_r2 = r2.eliminar_archivo(meta["r2_key"])
+    if not borrado_r2:
+        return jsonify({
+            "ok": False,
+            "error": (
+                "No se pudo eliminar el archivo de Cloudflare R2. "
+                "El registro se conservó: vuelve a intentarlo para no dejar "
+                "un archivo huérfano en el almacenamiento."
+            )
+        }), 502
+
+    # 3. Eliminar metadatos en D1
+    eliminado = db.eliminar_archivo_db(archivo_id, usuario_id)
+    if not eliminado:
+        return jsonify({"ok": False, "error": "No se pudo eliminar el registro en la base de datos"}), 500
+
+    respuesta = {"ok": True, "mensaje": "Archivo eliminado correctamente"}
+    return jsonify(respuesta)
 
 
 # =====================================================================

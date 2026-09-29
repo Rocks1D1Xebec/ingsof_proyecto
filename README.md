@@ -31,11 +31,12 @@
 3. [Marco Metodológico: IEEE 830, Scrum, MoSCoW y UML](#3-marco-metodológico-ieee-830-scrum-moscow-y-uml)
 4. [Librerías y Tecnologías: Justificación Técnica ("¿Por qué usamos esto?")](#4-librerías-y-tecnologías-justificación-técnica-por-qué-usamos-esto)
 5. [Desarrollo por Sprints (1, 2 y 3) y Pruebas de Caja Negra](#5-desarrollo-por-sprints-1-2-y-3-y-pruebas-de-caja-negra)
-6. [La Base de Datos: Modelo Entidad-Relación (8 Tablas en Cloudflare D1)](#6-la-base-de-datos-modelo-entidad-relación-8-tablas-en-cloudflare-d1)
+6. [La Base de Datos: Modelo Entidad-Relación (9 Tablas en Cloudflare D1)](#6-la-base-de-datos-modelo-entidad-relación-9-tablas-en-cloudflare-d1)
 7. [Inteligencia Artificial: Andamiaje Socrático, KaTeX y Workers AI](#7-inteligencia-artificial-andamiaje-socrático-katex-y-workers-ai)
 8. [Seguridad, Ética y Disclaimer Educativo](#8-seguridad-ética-y-disclaimer-educativo)
 9. [Catálogo de Endpoints de la API REST](#9-catálogo-de-endpoints-de-la-api-rest)
-10. [Banco de Preguntas Típicas del Jurado y Respuestas Maestras](#10-banco-de-preguntas-típicas-del-jurado-y-respuestas-maestras)
+10. [Almacenamiento de Archivos con Cloudflare R2](#10-almacenamiento-de-archivos-con-cloudflare-r2)
+11. [Banco de Preguntas Típicas del Jurado y Respuestas Maestras](#11-banco-de-preguntas-típicas-del-jurado-y-respuestas-maestras)
 
 ---
 
@@ -71,7 +72,7 @@ Desarrollar un asistente web móvil de tutoría académica escolar accesible des
 
 ### Objetivos Específicos (Mapeados a las 4 Fases de la Ingeniería de Software):
 1. **Fase de Análisis:** Analizar y formalizar los requerimientos aplicando el estándar **IEEE 830** y la técnica de priorización **MoSCoW** para delimitar el alcance del MVP bajo entorno móvil estricto.
-2. **Fase de Diseño:** Diseñar la arquitectura del software mediante diagramas **UML** (casos de uso, secuencia, comunicación), historias de usuario (plantilla Connextra) y el modelo entidad-relación normalizado de **8 tablas** en Cloudflare D1.
+2. **Fase de Diseño:** Diseñar la arquitectura del software mediante diagramas **UML** (casos de uso, secuencia, comunicación), historias de usuario (plantilla Connextra) y el modelo entidad-relación normalizado de **9 tablas** en Cloudflare D1.
 3. **Fase de Implementación:** Construir los módulos funcionales integrando **Flask, Gunicorn, Google Gemini SDK**, adaptación de analogías ("aprender por asociación"), soporte visual con **Cloudflare Workers AI** y notación **KaTeX**.
 4. **Fase de Pruebas:** Validar la calidad, seguridad y usabilidad del sistema mediante **pruebas de caja negra** en cada Sprint de desarrollo.
 
@@ -121,6 +122,7 @@ Aquí tienes la respuesta exacta ante la típica pregunta: **"¿Por qué elegist
 | **KaTeX 0.16.11 (CDN)** | Motor de renderizado matemático web. | Creado por Khan Academy. Es hasta 10 veces más rápido que *MathJax*. Renderiza código LaTeX (`$...$` o `$$...$$`) como fracciones, raíces y exponentes reales directamente en la pantalla del celular sin consumir datos excesivos. |
 | **HTML5, CSS3 puro y JavaScript Vanilla** | Frontend nativo sin frameworks. | **Decisión crítica de ingeniería:** No usamos *React, Angular o Vue* porque descargan paquetes de varios megabytes que agotan el plan de datos y enlentecen celulares modestos. El código nativo vuela en cualquier smartphone. |
 | **Python-Dotenv** | Gestor de variables de entorno. | Lee el archivo `.env` en local o las variables del panel de Render, protegiendo las credenciales de API para no subirlas nunca a GitHub por error. |
+| **Cloudflare R2 + `boto3`**               | Almacenamiento de objetos (archivos).       | Guarda el archivo físico del material que adjunta el alumno (fotos de tareas y PDF). D1 es SQLite y no debe almacenar binarios: meterlos allí infla la base y encarece las lecturas. R2 expone una API compatible con S3 y `boto3` es su cliente oficial en Python. En D1 queda solo el metadato y la clave `r2_key`.                                                                                                                                              |
 | **Web Speech API (`speechSynthesis`)** | Síntesis de voz nativa del navegador. | Cero librerías y cero bytes descargados: lee en voz alta las explicaciones en español (`es-ES`). Se complementa con el backend (`/api/audio-verbalizado`) que convierte las fórmulas LaTeX a palabras habladas antes de leerlas. |
 
 > 💡 **Término Clave: WSGI (Web Server Gateway Interface)**  
@@ -163,9 +165,9 @@ El desarrollo se organizó en 3 Sprints formales. En cada uno se ejecutaron **Pr
 
 ---
 
-## 6. LA BASE DE DATOS: MODELO ENTIDAD-RELACIÓN (8 TABLAS)
+## 6. LA BASE DE DATOS: MODELO ENTIDAD-RELACIÓN (9 TABLAS)
 
-El sistema utiliza una base de datos relacional normalizada en **Cloudflare D1** (`basedatos.sql`), compuesta por 8 tablas:
+El sistema utiliza una base de datos relacional normalizada en **Cloudflare D1** (`basedatos.sql`), compuesta por 9 tablas:
 
 1. **`usuarios`**: Almacena `id`, `nombre`, `email` (con restricción `UNIQUE`) y `contrasena` (hash con sal).
 2. **`materias`**: Contiene las 4 materias base (`es_base = 1`) más las materias privadas creadas por los estudiantes (`usuario_id`).
@@ -175,6 +177,9 @@ El sistema utiliza una base de datos relacional normalizada en **Cloudflare D1**
 6. **`respuestas`**: Guarda la explicación paso a paso de la IA conectada mediante Foreign Key a `mensajes(id)`. Incluye la columna `imagen_url` si se generó una ilustración.
 7. **`ejercicios`**: Repositorio de problemas generados por la IA con enunciado, respuesta esperada y nivel de dificultad.
 8. **`respuestas_ejercicios`**: Registra cada respuesta enviada por el estudiante, si fue correcta (`es_correcta = 1/0`), la retroalimentación recibida y la fecha.
+9. **`archivos`**: Almacena **solo metadatos** de los archivos adjuntos (ver sección 10). Nunca guarda el contenido del archivo.
+
+> ⚠️ **Importante:** D1 guarda **referencias**, no archivos. El contenido binario vive en Cloudflare R2 (ver sección 10). En D1 solo queda el `r2_key`, el nombre que ve el usuario, el formato, el MIME y el tamaño en bytes.
 
 > 💡 **Término Clave: Restricción UNIQUE y Clave Foránea (Foreign Key)**  
 > **¿Qué significan?**  
@@ -254,11 +259,111 @@ Si el docente pregunta sobre la ética y la seguridad del sistema:
 | `POST` | `/api/audio-verbalizado` | Soporte | Convierte la explicación (fórmulas LaTeX incluidas) a texto de locución en español para leerla en voz alta. |
 | `POST` | `/api/ejercicio` | Sprint 3 | Genera un ejercicio práctico adaptado al tema (RF-08) y lo persiste en el historial. |
 | `POST` | `/api/revisar` | Sprint 3 | Evalúa la solución, da feedback y actualiza aciertos (RF-09/10/13). |
+| `POST` | `/api/archivos/subir` | Sprint 3 | Sube una foto o un PDF a Cloudflare R2 y registra sus metadatos en D1. |
+| `GET` | `/api/archivos` | Sprint 3 | Lista los archivos del alumno, opcionalmente filtrados por `materia_id`. |
+| `GET` | `/api/archivos/<id>/descargar` | Sprint 3 | Sirve el archivo desde R2 tras verificar sesión y propiedad. |
+| `DELETE` | `/api/archivos/<id>` | Sprint 3 | Elimina el objeto de R2 y luego su metadato en D1. |
 | `GET` | `/api/modelos` | Soporte | Monitorea qué modelos de Gemini están activos en la cuenta. |
 
 ---
 
-## 10. BANCO DE PREGUNTAS TÍPICAS DEL JURADO Y RESPUESTAS MAESTRAS
+## 10. ALMACENAMIENTO DE ARCHIVOS CON CLOUDFLARE R2
+
+El estudiante puede adjuntar material de estudio (fotos de tareas y apuntes en PDF) desde el chat. La arquitectura separa deliberadamente **dónde vive el archivo** de **dónde se anota que existe**:
+
+| Capa | Servicio | Qué guarda | Por qué |
+| :--- | :--- | :--- | :--- |
+| **Almacenamiento físico** | **Cloudflare R2** (Object Storage, API compatible con S3) | Los bytes del archivo | D1 es SQLite: meter binarios ahí infla la base, ralentiza las consultas y encarece las lecturas. |
+| **Metadatos** | **Cloudflare D1** (tabla `archivos`) | Nombre que ve el usuario, `r2_key`, formato, MIME y tamaño | Permite listar, descargar y borrar sin tocar el bucket. |
+
+> **D1 nunca guarda el contenido del archivo.** Solo la referencia (`r2_key`) y los datos descriptivos.
+
+### Formatos y límite
+
+- **Formatos permitidos:** `PNG`, `JPG`, `JPEG`, `WEBP`, `GIF` y `PDF`.
+- **Límite por archivo:** **10 MB**.
+- Se validan **tres capas** en el backend: extensión, tipo MIME declarado y **magic bytes** (los primeros bytes reales del archivo). Esta última comprobación impide subir un ejecutable o un script renombrado a `.png` o `.pdf`.
+
+### Cómo se valida que el alumno es dueño del archivo
+
+1. Todos los endpoints exigen **sesión iniciada** (`401` si no la hay).
+2. Cada consulta filtra por `usuario_id`: un alumno **nunca** puede listar, descargar ni borrar material de otro.
+3. Al subir, la materia indicada se valida de forma **estricta**: debe existir y ser visible para ese usuario. No se confía en el `materia_id` que envía el navegador.
+
+### Clave en R2 y nombre original
+
+Son dos cosas distintas, a propósito:
+
+- **`r2_key`** es la clave interna de almacenamiento y se genera con un UUID: `usuarios/{usuario_id}/{uuid}.{ext}`. No depende del nombre del archivo, así que un nombre con acentos, espacios o caracteres raros nunca puede provocar una colisión ni un path traversal.
+- **`nombre_original`** es lo que el alumno ve en el modal de materiales, y **sí conserva los acentos**: _"Tarea de Física 1.pdf"_.
+
+### Variables de entorno necesarias
+
+Están documentadas en **`.env.example`**, que es la plantilla versionada (no contiene ningún secreto). Copiar a `.env` y rellenar:
+
+| Variable | Para qué sirve |
+| :--- | :--- |
+| `R2_BUCKET_NAME` | Nombre del bucket de R2 donde se guardan los archivos. |
+| `R2_ACCESS_KEY_ID` | Clave de acceso de R2. |
+| `R2_SECRET_ACCESS` | Clave secreta de R2. |
+| `R2_ENDPOINT` | Endpoint S3 de la cuenta, p. ej. `https://<ACCOUNT_ID>.r2.cloudflarestorage.com`. |
+| `CLOUDFLARE_ACCOUNT_ID` | Identificador de la cuenta de Cloudflare. |
+| `CLOUDFLARE_DATABASE_ID` | Identificador de la base D1. |
+| `CLOUDFLARE_API_TOKEN` | Token de la API con permiso `D1 Database: Edit`. |
+| `SECRET_KEY` | Firma de las cookies de sesión de Flask. |
+
+> 🔒 `.env` está en `.gitignore`. **Nunca se sube al repositorio.**
+
+### Configuración necesaria en Render
+
+1. Crear el bucket en **Cloudflare > R2 Object Storage** y un token con permiso *Object Read & Write* sobre ese bucket.
+2. En **Render > tu servicio > Environment**, añadir las ocho variables de la tabla anterior. En Render **no** se usa el archivo `.env`: las variables se configuran en el panel.
+3. Tras desplegar, la app crea sola la tabla `archivos` en D1 al arrancar (`asegurar_inicializacion()`). No hace falta ejecutar ningún script a mano.
+
+> **Mientras el bucket de R2 no esté configurado**, el botón de adjuntar sigue visible pero la subida se rechaza con un **503** y un mensaje que dice exactamente qué variables faltan. No es un error 502 confuso: la aplicación distingue "no está configurado" de "la subida falló".
+>
+> Esto detecta tambié el caso más común: copiar `.env.example` a `.env` y olvidar rellenarlo. Los valores de ejemplo se reconocen y la aplicación no intenta conectar con ellos, así que no se queda colgada esperando timeouts.
+
+### Coherencia entre R2 y D1
+
+Se controla en los dos sentidos para que no queden archivos sueltos ni referencias rotas:
+
+- **Al subir:** si la subida a R2 falla, no se escribe nada en D1. Si R2 funciona pero D1 falla, se **borra el objeto de R2** para no dejar un archivo que el alumno no puede ver. Si el metadato llegó a escribirse pero no se pudo confirmar, **no se borra el objeto** y se avisa, porque la referencia en D1 ya existe.
+- **Al borrar:** primero se elimina el objeto de R2 y después el metadato. La referencia de D1 **no se borra hasta que el objeto físico se ha confirmado como borrado**. Si R2 no está configurado o el borrado falla, el registro se conserva y el alumno puede reintentar. Es la decisión clave: borrar el metadato sin poder tocar el bucket dejaría un archivo huérfano que nadie podría encontrar ni eliminar desde la aplicación, ocupando espacio y pagando almacenamiento para siempre.
+
+### Pruebas
+
+```bash
+python test_archivos_suite.py
+```
+
+Cubre validación de extensiones, MIME, magic bytes, límite de tamaño, sesión requerida, aislamiento entre usuarios, validación de materia, reversión cuando falla D1, coherencia de borrado, reacción ante respuestas inesperadas de la API de D1 y que las tres definiciones del esquema coincidan.
+
+Son **pruebas unitarias**: no hablan con R2 ni con D1 reales, así que no requieren credenciales.
+
+### Probar de verdad contra Cloudflare
+
+```bash
+python test_integracion_r2.py
+```
+
+Este guion **sí** toca los servicios reales: sube un PDF de prueba al bucket, lo registra en D1, lo descarga, comprueba que otro usuario no puede verlo y lo elimina. Al terminar no queda nada ni en el bucket ni en la base.
+
+Imprime únicamente si cada paso fue correcto o falló. **Nunca imprime el valor de una credencial**, solo el nombre de las variables que falten.
+
+Si el `.env` aún tiene los valores de ejemplo de la plantilla, el guion **se detiene antes de conectar** y dice qué variables rellenar y dónde se encuentran. No intenta adivinar ni inventa nada.
+
+Para que funcione hacen falta dos cosas:
+
+1. Las 8 variables de la tabla de arriba con valores reales en `.env`.
+2. Un `usuario` que ya exista en D1, porque la tabla `archivos` declara
+   `FOREIGN KEY ... ON DELETE CASCADE` y rechaza un `usuario_id` inexistente.
+   Por defecto usa el `id = 1`; se puede cambiar con la variable
+   `R2_TEST_USUARIO_ID`.
+
+---
+
+## 11. BANCO DE PREGUNTAS TÍPICAS DEL JURADO Y RESPUESTAS MAESTRAS
 
 ### ❓ Pregunta 1: "¿Por qué afirman que el sistema está diseñado exclusivamente para celulares si es una página web?"
 > **Respuesta:**  

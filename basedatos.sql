@@ -4,8 +4,29 @@
 -- de Cloudflare D1, pega TODO este archivo y ejecútalo de una vez.
 -- Deja: 9 tablas + 4 materias base globales. Sin usuarios semilla.
 -- =====================================================================
+--
+-- ⚠️  AVISO — ESTE SCRIPT ES DESTRUCTIVO
+--
+--     Es un script de INSTALACIÓN LIMPIA. Borra TODAS las tablas, incluidos
+--     usuarios, mensajes, ejercicios y el historial completo. NO es una
+--     migración y NO debe ejecutarse sobre una base que ya está en uso.
+--
+--     En particular, `DROP TABLE IF EXISTS archivos;` elimina todos los
+--     metadatos de archivos. Los objetos físicos YA SUBIDOS a Cloudflare R2
+--     NO se borran: quedan huérfanos en el bucket y seguirán consumiendo
+--     almacenamiento hasta que se limpien a mano.
+--
+--     Para actualizar una base existente, NO uses este archivo. La app
+--     ejecuta `asegurar_inicializacion()` en cada arranque, que crea lo que
+--     falta y migra `archivos` a su versión con FOREIGN KEY sin perder datos.
+--
+--     La definición de la tabla `archivos` de este archivo debe coincidir con
+--     `SQL_TABLA_ARCHIVOS` en cloudflare_d1.py (fuente única de la que
+--     init_db.py también toma la definición).
+-- =====================================================================
 
 -- 1) Limpieza (hijas primero por las FOREIGN KEY)
+DROP TABLE IF EXISTS archivos;
 DROP TABLE IF EXISTS respuestas_ejercicios;
 DROP TABLE IF EXISTS respuestas;
 DROP TABLE IF EXISTS mensajes;
@@ -97,6 +118,20 @@ CREATE TABLE respuestas_ejercicios (
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
   FOREIGN KEY (ejercicio_id) REFERENCES ejercicios(id),
   FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+);
+
+CREATE TABLE IF NOT EXISTS archivos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  usuario_id INTEGER NOT NULL,
+  materia_id INTEGER,
+  nombre_original TEXT NOT NULL,
+  r2_key TEXT NOT NULL UNIQUE,
+  mime_type TEXT NOT NULL,
+  extension TEXT NOT NULL,
+  tamano_bytes INTEGER NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+  FOREIGN KEY (materia_id) REFERENCES materias(id) ON DELETE SET NULL
 );
 
 -- 3) Materias base globales (visibles para todos)

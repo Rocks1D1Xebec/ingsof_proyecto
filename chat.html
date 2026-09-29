@@ -81,6 +81,265 @@
       pointer-events: none;
       transform: translateX(-50%) translateY(-8px);
     }
+    /* Estilos para gestión y subida de archivos (Cloudflare R2 + D1) */
+    .chat-attach-btn {
+      /* 44px es el mínimo táctil comfortable con el dedo en un celular. */
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-full, 50%);
+      background: var(--bg-card, #1c2333);
+      border: 1.5px solid var(--border-input, #2d3748);
+      color: var(--text-secondary, #8b949e);
+      font-size: 1.15rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+    .chat-attach-btn:hover {
+      background: var(--bg-secondary, #161b22);
+      color: var(--accent-blue, #3b82f6);
+      border-color: var(--accent-blue, #3b82f6);
+      transform: scale(1.05);
+    }
+    .file-upload-preview {
+      display: none;
+      background: var(--bg-secondary, #161b22);
+      border-top: 1px solid var(--border-color, #2d333b);
+      padding: 8px 16px;
+      font-size: 0.82rem;
+      color: var(--text-primary, #e6edf3);
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .file-upload-preview__info {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+    }
+    .file-upload-preview__status {
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    .file-upload-preview__cancel {
+      background: none;
+      border: none;
+      color: var(--text-muted, #6e7681);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 2px 6px;
+    }
+    .file-upload-preview__cancel:hover {
+      color: var(--accent-red, #ef4444);
+    }
+    .chat-file-card {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-top: 8px;
+      text-decoration: none;
+      color: inherit;
+      font-size: 0.88rem;
+      max-width: 100%;
+      transition: background 0.2s;
+    }
+    .chat-file-card:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+    .chat-file-card__icon {
+      font-size: 1.5rem;
+    }
+    .chat-file-card__name {
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      /* min() evita que el nombre desborde en pantallas de 320-360px,
+         donde antes la tarjeta se salía de la burbuja. */
+      max-width: min(200px, 42vw);
+    }
+    .chat-file-card__meta {
+      font-size: 0.75rem;
+      opacity: 0.85;
+      color: var(--text-secondary, #94a3b8);
+    }
+    .chat-header-actions {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-header-archivos {
+      background: var(--bg-card, #1c2333);
+      border: 1px solid var(--border-color, #2d333b);
+      border-radius: var(--radius-sm, 8px);
+      padding: 6px 10px;
+      font-size: 0.78rem;
+      color: var(--text-primary, #e6edf3);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .btn-header-archivos:hover {
+      border-color: var(--accent-blue, #3b82f6);
+      color: var(--accent-blue, #3b82f6);
+    }
+    /* Modal de archivos */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      z-index: 250;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal {
+      background: var(--bg-card, #1c2333);
+      border: 1px solid var(--border-color, #2d333b);
+      border-radius: var(--radius-lg, 16px);
+      width: 100%;
+      max-width: 440px;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    }
+    .modal__header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .modal__title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .modal__close {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+    .archivos-lista {
+      list-style: none;
+      padding: 0;
+      margin: 10px 0 0 0;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .archivo-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: var(--bg-secondary, #161b22);
+      border: 1px solid var(--border-color, #2d333b);
+      border-radius: 8px;
+      gap: 10px;
+    }
+    .archivo-item__info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      overflow: hidden;
+      flex: 1;
+    }
+    .archivo-item__name {
+      font-size: 0.85rem;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text-primary);
+    }
+    .archivo-item__meta {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+    .archivo-item__actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .btn-archivo-accion {
+      background: transparent;
+      border: 1px solid var(--border-color, #2d333b);
+      border-radius: 6px;
+      padding: 5px 8px;
+      /* Altura mínima táctil: sin esto los botones "Ver" y borrar medían
+         unos 29px y eran difíciles de acertar en un celular. */
+      min-height: 40px;
+      font-size: 0.75rem;
+      color: var(--text-primary);
+      text-decoration: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    .btn-archivo-accion:hover {
+      background: var(--accent-blue, #3b82f6);
+      border-color: var(--accent-blue, #3b82f6);
+      color: white;
+    }
+    .btn-archivo-eliminar:hover {
+      background: var(--accent-red, #ef4444);
+      border-color: var(--accent-red, #ef4444);
+      color: white;
+    }
+
+    /* --- Pantallas estrechas (celulares de 320-360px) --- */
+    /* Sin esto, el campo de escritura queda con muy poco ancho al añadir el
+       botón de adjuntar, y el modal de materiales se abre casi al límite. */
+    @media (max-width: 380px) {
+      .chat-input-bar {
+        padding: 10px 10px 14px;
+        gap: 8px;
+      }
+      .chat-input {
+        padding: 10px 12px;
+        font-size: 0.86rem;
+      }
+      .modal-overlay {
+        padding: 10px;
+      }
+      .modal {
+        padding: 16px;
+        max-height: 86vh;
+      }
+      .archivo-item {
+        padding: 8px 10px;
+        gap: 8px;
+      }
+      .archivo-item__info {
+        gap: 8px;
+      }
+      .btn-archivo-accion {
+        padding: 5px 6px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -118,6 +377,11 @@
         <p class="chat-subject-header__tag">Estás estudiando</p>
         <h1 class="chat-subject-header__name" id="subject-name">Matemáticas</h1>
       </div>
+      <div class="chat-header-actions">
+        <button class="btn-header-archivos" id="btn-ver-archivos" type="button" title="Ver archivos y apuntes adjuntos">
+          📁 <span>Materiales</span> (<span id="count-files">0</span>)
+        </button>
+      </div>
     </div>
 
     <!-- Mensajes del chat -->
@@ -141,7 +405,27 @@
 
     <!-- Barra de entrada inferior fija -->
     <div class="chat-bottom-bar" id="chat-bottom-bar">
+      <!-- Barra de previsualización y progreso de subida -->
+      <div class="file-upload-preview" id="file-upload-preview">
+        <div class="file-upload-preview__info">
+          <span id="preview-file-icon">📎</span>
+          <span id="preview-file-name">archivo.pdf</span>
+        </div>
+        <span class="file-upload-preview__status" id="preview-file-status">Listo</span>
+        <button type="button" class="file-upload-preview__cancel" id="btn-cancel-upload" title="Cancelar">✕</button>
+      </div>
+
       <div class="chat-input-bar" id="chat-input-bar">
+        <!-- Input file nativo con accept estricto para imágenes y PDF -->
+        <input
+          type="file"
+          id="file-upload-input"
+          accept="image/png,image/jpeg,image/webp,image/gif,application/pdf"
+          style="display: none;"
+        >
+        <button type="button" class="chat-attach-btn" id="btn-attach" title="Adjuntar foto de tarea o apunte en PDF">
+          📎
+        </button>
         <input
           type="text"
           class="chat-input"
@@ -152,6 +436,26 @@
         <button class="chat-send-btn" id="btn-send" aria-label="Enviar mensaje">
           ✈
         </button>
+      </div>
+    </div>
+
+    <!-- Modal de Archivos y Materiales de Estudio (R2 + D1) -->
+    <div class="modal-overlay" id="modal-archivos-overlay" style="display: none;">
+      <div class="modal" id="modal-archivos" role="dialog" aria-modal="true" aria-labelledby="modal-archivos-title">
+        <div class="modal__header">
+          <h2 class="modal__title" id="modal-archivos-title">📁 Materiales y Tareas Adjuntas</h2>
+          <button class="modal__close" id="btn-archivos-close" aria-label="Cerrar modal">✕</button>
+        </div>
+        <p class="modal__description" style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 8px;">
+          Documentos PDF e imágenes guardados en Cloudflare R2 para tu consulta.
+        </p>
+        <div id="archivos-loading" style="text-align: center; padding: 16px; color: var(--text-muted); font-size: 0.85rem;">
+          Cargando archivos... ⏳
+        </div>
+        <div id="archivos-vacio" style="display: none; text-align: center; padding: 20px; color: var(--text-muted); font-size: 0.85rem;">
+          No tienes archivos adjuntos en esta materia.<br>Usa el botón 📎 junto al chat para subir una foto o PDF.
+        </div>
+        <ul class="archivos-lista" id="archivos-lista" style="display: none;"></ul>
       </div>
     </div>
 
@@ -287,6 +591,21 @@
       const msg = document.createElement('div');
       msg.className = 'chat-message chat-message--user';
       msg.innerHTML = `<div class="chat-message__bubble">${escaparHTML(texto)}</div>`;
+      chatMessages.appendChild(msg);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      if (window.renderizarMatematicas) renderizarMatematicas(msg);
+      return msg;
+    }
+
+    // Variante para cuando el mensaje ya es HTML construido por la propia app
+    // (por ejemplo, la tarjeta de un archivo adjunto). NO se escapa el contenido:
+    // quien la llama es responsable de haber escapado cada valor interpolado.
+    // Se mantiene separada de agregarMensajeUsuario para no cambiar el
+    // comportamiento del resto de mensajes del chat.
+    function agregarMensajeUsuarioHTML(htmlSeguro) {
+      const msg = document.createElement('div');
+      msg.className = 'chat-message chat-message--user';
+      msg.innerHTML = `<div class="chat-message__bubble">${htmlSeguro}</div>`;
       chatMessages.appendChild(msg);
       chatMessages.scrollTop = chatMessages.scrollHeight;
       if (window.renderizarMatematicas) renderizarMatematicas(msg);
@@ -1044,6 +1363,254 @@
         chatMessages.scrollTop = chatMessages.scrollHeight;
       }
     };
+
+    // =========================================================================
+    // 11. SISTEMA DE GESTIÓN DE ARCHIVOS (CLOUDFLARE R2 + CLOUDFLARE D1)
+    // =========================================================================
+    const btnAttach = document.getElementById('btn-attach');
+    const fileUploadInput = document.getElementById('file-upload-input');
+    const fileUploadPreview = document.getElementById('file-upload-preview');
+    const previewFileName = document.getElementById('preview-file-name');
+    const previewFileIcon = document.getElementById('preview-file-icon');
+    const previewFileStatus = document.getElementById('preview-file-status');
+    const btnCancelUpload = document.getElementById('btn-cancel-upload');
+    const btnVerArchivos = document.getElementById('btn-ver-archivos');
+    const modalArchivosOverlay = document.getElementById('modal-archivos-overlay');
+    const btnArchivosClose = document.getElementById('btn-archivos-close');
+    const countFiles = document.getElementById('count-files');
+    const archivosLista = document.getElementById('archivos-lista');
+    const archivosLoading = document.getElementById('archivos-loading');
+    const archivosVacio = document.getElementById('archivos-vacio');
+
+    const EXT_PERMITIDAS = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.pdf'];
+    const MAX_TAMANO = 10 * 1024 * 1024; // 10 MB
+
+    function formatearTamano(bytes) {
+      if (!bytes || bytes === 0) return '0 B';
+      const k = 1024;
+      const dm = 1;
+      const sizes = ['B', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    }
+
+    function iconoSegunMime(ext, mime) {
+      if (ext === 'pdf' || (mime && mime.includes('pdf'))) return '📄';
+      return '🖼️';
+    }
+
+    // Actualizar el contador "Materiales (N)" de la cabecera.
+    // Usa exactamente la misma consulta que el modal, con el mismo materia_id,
+    // así que el número que se ve y la lista que se abre siempre coinciden.
+    // El backend filtra de forma estricta por materia: los archivos globales
+    // (materia_id nulo) no se suman al contador de ninguna materia.
+    async function actualizarContadorArchivos() {
+      if (!countFiles) return;
+      try {
+        const res = await fetch(`/api/archivos?materia_id=${encodeURIComponent(materiaId)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.ok && Array.isArray(data.archivos)) {
+            countFiles.textContent = data.archivos.length;
+          }
+        }
+      } catch (e) {}
+    }
+    actualizarContadorArchivos();
+
+    // Abrir selector nativo al pulsar clip
+    if (btnAttach && fileUploadInput) {
+      btnAttach.addEventListener('click', () => {
+        fileUploadInput.click();
+      });
+    }
+
+    // Cancelar subida / cerrar preview
+    if (btnCancelUpload) {
+      btnCancelUpload.addEventListener('click', () => {
+        if (fileUploadPreview) fileUploadPreview.style.display = 'none';
+        if (fileUploadInput) fileUploadInput.value = '';
+      });
+    }
+
+    // Manejar selección de archivo y subida automática con feedback visual
+    if (fileUploadInput) {
+      fileUploadInput.addEventListener('change', async () => {
+        const file = fileUploadInput.files[0];
+        if (!file) return;
+
+        const nombre = file.name;
+        const tamano = file.size;
+        const ext = '.' + (nombre.split('.').pop() || '').toLowerCase();
+
+        // Validaciones en cliente
+        if (!EXT_PERMITIDAS.includes(ext)) {
+          alert('Tipo de archivo no permitido. Solo se admiten imágenes (PNG, JPG, WEBP, GIF) y documentos PDF.');
+          fileUploadInput.value = '';
+          return;
+        }
+
+        if (tamano > MAX_TAMANO) {
+          alert(`El archivo excede el tamaño máximo permitido de 10 MB (${formatearTamano(tamano)}).`);
+          fileUploadInput.value = '';
+          return;
+        }
+
+        // Mostrar barra de previsualización y progreso
+        if (fileUploadPreview) {
+          fileUploadPreview.style.display = 'flex';
+          previewFileIcon.textContent = ext === '.pdf' ? '📄' : '🖼️';
+          previewFileName.textContent = `${nombre} (${formatearTamano(tamano)})`;
+          previewFileStatus.textContent = 'Subiendo a R2... ⏳';
+          previewFileStatus.style.color = '#3b82f6';
+        }
+
+        // Enviar al endpoint seguro con multipart/form-data
+        const formData = new FormData();
+        formData.append('archivo', file);
+        formData.append('materia_id', materiaId);
+
+        try {
+          const res = await fetch('/api/archivos/subir', {
+            method: 'POST',
+            body: formData
+          });
+
+          const data = await res.json();
+
+          if (res.ok && data.ok && data.archivo) {
+            previewFileStatus.textContent = '✅ ¡Guardado en R2!';
+            previewFileStatus.style.color = '#22c55e';
+
+            // Agregar tarjeta interactiva al chat.
+            // Los valores vienen del backend y se escapan antes de interpolarlos;
+            // la tarjeta se inyecta con agregarMensajeUsuarioHTML porque es HTML
+            // construido por la app, no texto plano.
+            const arch = data.archivo;
+            const cardHtml = `
+              <div>He adjuntado el material: <strong>${escaparHTML(arch.nombre_original)}</strong></div>
+              <a href="/api/archivos/${encodeURIComponent(arch.id)}/descargar" target="_blank" rel="noopener" class="chat-file-card" title="Abrir o descargar archivo">
+                <span class="chat-file-card__icon">${iconoSegunMime(arch.extension, arch.mime_type)}</span>
+                <div>
+                  <div class="chat-file-card__name">${escaparHTML(arch.nombre_original)}</div>
+                  <div class="chat-file-card__meta">${formatearTamano(arch.tamano_bytes)} • Toca para abrir</div>
+                </div>
+              </a>
+            `;
+            agregarMensajeUsuarioHTML(cardHtml);
+            actualizarContadorArchivos();
+
+            // Ocultar barra después de 2.5s
+            setTimeout(() => {
+              if (fileUploadPreview) fileUploadPreview.style.display = 'none';
+              fileUploadInput.value = '';
+            }, 2500);
+
+          } else {
+            const err = data.error || 'Error al procesar el archivo.';
+            previewFileStatus.textContent = '❌ ' + err;
+            previewFileStatus.style.color = '#ef4444';
+          }
+        } catch (err) {
+          previewFileStatus.textContent = '❌ Error de conexión al subir.';
+          previewFileStatus.style.color = '#ef4444';
+        }
+      });
+    }
+
+    // Modal de Gestión de Archivos
+    if (btnVerArchivos && modalArchivosOverlay) {
+      btnVerArchivos.addEventListener('click', async () => {
+        modalArchivosOverlay.style.display = 'flex';
+        archivosLoading.style.display = 'block';
+        archivosVacio.style.display = 'none';
+        archivosLista.style.display = 'none';
+        archivosLista.innerHTML = '';
+
+        try {
+          const res = await fetch(`/api/archivos?materia_id=${encodeURIComponent(materiaId)}`);
+          const data = await res.json();
+          archivosLoading.style.display = 'none';
+
+          if (data.ok && Array.isArray(data.archivos) && data.archivos.length > 0) {
+            archivosLista.style.display = 'flex';
+            data.archivos.forEach(arch => {
+              const li = document.createElement('li');
+              li.className = 'archivo-item';
+              li.innerHTML = `
+                <div class="archivo-item__info">
+                  <span style="font-size: 1.3rem;">${iconoSegunMime(arch.extension, arch.mime_type)}</span>
+                  <div class="archivo-item__text">
+                    <div class="archivo-item__name">${escaparHTML(arch.nombre_original)}</div>
+                    <div class="archivo-item__meta">${formatearTamano(arch.tamano_bytes)} • ${arch.creado_en ? arch.creado_en.slice(0, 16) : ''}</div>
+                  </div>
+                </div>
+                <div class="archivo-item__actions">
+                  <a href="/api/archivos/${encodeURIComponent(arch.id)}/descargar" target="_blank" rel="noopener" class="btn-archivo-accion" title="Ver / Descargar">
+                    👁️ Ver
+                  </a>
+                  <button type="button" class="btn-archivo-accion btn-archivo-eliminar" data-id="${encodeURIComponent(arch.id)}" title="Eliminar">
+                    🗑️
+                  </button>
+                </div>
+              `;
+
+              // Evento eliminar
+              const btnDel = li.querySelector('.btn-archivo-eliminar');
+              btnDel.addEventListener('click', async () => {
+                if (!confirm(`¿Deseas eliminar '${arch.nombre_original}' de Cloudflare R2 y D1?`)) return;
+                btnDel.disabled = true;
+                btnDel.textContent = '...';
+                try {
+                  const delRes = await fetch(`/api/archivos/${encodeURIComponent(arch.id)}`, { method: 'DELETE' });
+                  const delData = await delRes.json();
+                  if (delData.ok) {
+                    li.remove();
+                    actualizarContadorArchivos();
+                    if (archivosLista.children.length === 0) {
+                      archivosVacio.style.display = 'block';
+                    }
+                  } else {
+                    // El archivo se conserva: se restablece el botón para reintentar.
+                    // `detalle` lo rellena el servidor cuando el problema es de
+                    // configuración del almacenamiento.
+                    const mensaje = delData.detalle
+                      ? (delData.error + ' (' + delData.detalle + ')')
+                      : (delData.error || 'No se pudo eliminar el archivo');
+                    alert(mensaje);
+                    btnDel.disabled = false;
+                    btnDel.textContent = '🗑️';
+                  }
+                } catch (e) {
+                  alert('Error de conexión al conectar con el servidor para eliminar');
+                  btnDel.disabled = false;
+                  btnDel.textContent = '🗑️';
+                }
+              });
+
+              archivosLista.appendChild(li);
+            });
+          } else {
+            archivosVacio.style.display = 'block';
+          }
+        } catch (e) {
+          archivosLoading.style.display = 'none';
+          archivosVacio.style.display = 'block';
+          archivosVacio.textContent = 'Error al cargar lista de archivos.';
+        }
+      });
+    }
+
+    if (btnArchivosClose && modalArchivosOverlay) {
+      btnArchivosClose.addEventListener('click', () => {
+        modalArchivosOverlay.style.display = 'none';
+      });
+      modalArchivosOverlay.addEventListener('click', (e) => {
+        if (e.target === modalArchivosOverlay) {
+          modalArchivosOverlay.style.display = 'none';
+        }
+      });
+    }
   </script>
 
 </body>

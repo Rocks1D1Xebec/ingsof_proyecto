@@ -5,12 +5,18 @@ Script para inicializar DESDE CERO las tablas en Cloudflare D1
 y poblar las 4 materias base globales.
 
 Equivalente local del bloque copiar-pegar de `basedatos.sql`.
-Ejecutar una sola vez (o tras borrar la D1):
+A diferencia de `basedatos.sql`, este script NO borra nada: solo crea
+las tablas que falten (`CREATE TABLE IF NOT EXISTS`), así que se puede
+ejecutar más de una vez sin perder datos.
 
     python init_db.py
+
+La definición de la tabla `archivos` se importa de `cloudflare_d1`
+(`SQL_TABLA_ARCHIVOS`) para que no pueda divergir de la que usa la app al
+arrancar ni de la del script de instalación limpia.
 """
 
-from cloudflare_d1 import ejecutar_sql
+from cloudflare_d1 import SQL_TABLA_ARCHIVOS, ejecutar_sql
 
 TABLAS = [
     """
@@ -100,6 +106,8 @@ TABLAS = [
             FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
         )
     """,
+    # Metadatos de los archivos cuyo contenido físico vive en Cloudflare R2.
+    SQL_TABLA_ARCHIVOS,
 ]
 
 MATERIAS_BASE = [
@@ -111,7 +119,7 @@ MATERIAS_BASE = [
 
 
 def inicializar():
-    """Crea las 9 tablas y agrega las 4 materias base globales."""
+    """Crea las 10 tablas y agrega las 4 materias base globales."""
     for sql in TABLAS:
         print("🔧 Creando/verificando tabla...")
         ejecutar_sql(sql)
